@@ -1,0 +1,41 @@
+# Python bytecode / packaging
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Local environment
+.env
+
+# Local phase specs / working prompts (not part of the runnable repo)
+prompts/
+
+# Runtime output
+out/
+*.log
+telemetry.jsonl
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+
+# Model weights
+*.gguf
+*.bin
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scenario files are evaluation data and must stay tracked, even if a rule above matches them.
+!eval/scenarios/
+!eval/scenarios/**/
+!eval/scenarios/**/*.jsonl
+
+# Dense retrieval model (scripts/fetch_models.py)
+models/
+
+# Office temp/lock files
+~$*

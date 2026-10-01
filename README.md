@@ -1,117 +1,111 @@
-# SL-RAG: Streaming Hybrid Retrieval-Augmented Generation Engine
+# SL-RAG: Streaming Live RAG
 
-A production-grade, low-latency streaming RAG system built with deterministic corpus normalization, hybrid Okapi BM25 + dense neural retrieval (BAAI/bge-small), zero-loss async telemetry bus, session-isolated stream gateway, and a fail-closed claim verification pipeline.
+SL-RAG answers questions about a fixed document corpus while the user is still speaking or typing. Transcript chunks stream in over a WebSocket, and a retrieval controller decides on every chunk whether there is enough meaning to retrieve yet. Multi-part questions are split into sub-queries, and each is retrieved as soon as its clause is complete. When the utterance ends, the evidence is usually already there, so the first grounded sentence arrives sooner (test-split TTFT p50 388 ms vs 485 ms for a retrieve-at-the-end baseline, in virtual replay time).
 
----
+Answers are built only from retrieved evidence. Every claim cites a `doc§section` chunk, and a fail-closed verifier drops any claim it cannot ground in the chunk it cites (groundedness 1.000, 0 hallucinated ids). Parts of a question the corpus cannot answer are reported as uncertain instead of guessed. If the user adds a constraint later ("assume we're on the Enterprise plan"), only the affected claims are revised, and the rest of the answer is preserved unchanged. Every decision is emitted as telemetry, and a trace UI shows it live.
 
-## Architecture Overview
-
-```
-+----------------------------------------------------------------------------------------------------+
-|                                      SL-RAG Streaming Pipeline                                     |
-+----------------------------------------------------------------------------------------------------+
-|                                                                                                    |
-|  [ Ingest / Loader ] ---> [ Section-Aware Chunker ] ---> [ Doc_ID§Section Stable Deterministic IDs]|
-|                                                                    |                               |
-|                               +------------------------------------+------------------------------+|
-|                               |                                                                   ||
-|                               v                                                                   v|
-|                    [ BM25 Okapi Index ]                                             [ Dense BGE-Small 384d ]
-|                    (Vocab, Postings, IDF)                                           (Unit L2 Normalized)   |
-|                               |                                                                   ||
-|                               +------------------------------------+------------------------------+|
-|                                                                    |                               |
-|                                                                    v                               |
-|                                                   [ Reciprocal Rank Fusion (RRF) ]                 |
-|                                                                    |                               |
-|                                                                    v                               |
-|  [ WebSocket / Client ] ---> [ Reorder Buffer ] ---> [ Gateway Normalizer ] ---> [ Instrumented Search ]
-|                                                                                        |           |
-|                                                                                        v           |
-|                                                                            [ Sufficiency Gate ]    |
-|                                                                            (dense>=0.55, cov>=0.5) |
-|                                                                                        |           |
-|                                                                                        v           |
-|                                                                            [ Claim Drafter ]       |
-|                                                                            (Enum-Constrained IDs)  |
-|                                                                                        |           |
-|                                                                                        v           |
-|                                                                            [ Fail-Closed Verifier ]|
-|                                                                            (5 Grounding Checks)    |
-|                                                                                        |           |
-|                                                                                        v           |
-|  [ JSONL + WS Telemetry ] <--- [ Zero-Loss Telemetry Bus ] <---------------- [ Versioned Ledger v1 ]
-|                                                                                        |           |
-|                                                                                        v           |
-|  [ Client Stream ] <------------------------------------------------------- [ AnswerDelta Stream ] |
-+----------------------------------------------------------------------------------------------------+
-```
-
----
-
-## Key Features
-
-### Phase 1: Foundation, Corpus Ingestion & Hybrid Retrieval
-- **Reproducible Chunk Identifiers**: Generates deterministic `Doc_ID§Section` IDs that remain consistent across runs and indexing cycles.
-- **Section-Aware Chunker**: Respects logical document headings and preserves section boundaries (300–500 tokens).
-- **Okapi BM25 Index**: Complete implementation with vocabulary mapping, IDF table, stored postings, and term frequency saturation.
-- **Dense Embedding Engine**: BAAI/bge-small compatible 384-dimensional normalized vector indexing with cosine similarity.
-- **Reciprocal Rank Fusion (RRF)**: Merges BM25 and dense rankings with tie-breaking and rank weighting.
-- **`slrag` CLI**: Commands for `audit`, `index`, `search`, and `probe`.
-
-### Phase 2: Event Contracts, Telemetry Bus & Stream Gateway
-- **Frozen Pydantic v2 Contracts**: Immutable schemas with configuration hashing (`cfg_hash`), session IDs, and sequence tracking.
-- **Zero-Loss Telemetry Bus**: Dual-target async emitter logging to disk JSONL and broadcasting to active WebSocket subscribers.
-- **Stream Gateway**: Schema key alias normalization, cumulative/delta text merging, and sequence reorder buffering.
-- **Session Registry**: Lazy session instantiation, per-session async locks for concurrency isolation, and idle session reaper.
-- **Trace Coverage Checker**: End-of-turn lifecycle validator ensuring trace completeness.
-- **FastAPI Service**: Endpoints for `/health`, `/ws/stream`, `/ws/telemetry`, `/metrics`, and `/debug/search`.
-
-### Phase 3: Grounded Answer Pipeline
-- **Qwen2.5-3B-Instruct LLM Wrapper**: Token accounting (`tokens_in`, `tokens_out`) and generation cost calculations.
-- **Sufficiency Gate**: Enforces `dense_top1 >= 0.55` and `coverage >= 0.50` prior to drafting claims.
-- **Enum-Constrained Claim Drafter**: Constrains citations exclusively to the active retrieved chunk set.
-- **Fail-Closed Verifier**: Runs 5 independent verification checks:
-  1. *Lexical Check*: Token overlap against cited text.
-  2. *Semantic Check*: Embedding similarity between claim and chunk.
-  3. *Coreference Check*: Entity grounding for pronouns.
-  4. *Hallucinated ID Check*: Rejects any doc ID outside the retrieved set.
-  5. *Consistency Check*: Rejects claims contradicting the ledger or context.
-- **Claim Ledger v1**: Monotonically incrementing versioned store tracking verified claims across turns.
-- **Batch Turn Engine**: Coordinates retrieval, gating, verification, streaming deltas, and turn summaries.
-
----
-
-## CLI Usage
-
-### 1. Audit Corpus
-```bash
-./bin/slrag audit data/sample_corpus.json
-```
-
-### 2. Index Corpus
-```bash
-./bin/slrag index data/sample_corpus.json --output data/index
-```
-
-### 3. Search Index
-```bash
-./bin/slrag search "surface code physical qubits error threshold" --index data/index --mode hybrid --top 3
-```
-
-### 4. Probe System
-```bash
-./bin/slrag probe --index data/index
-```
-
----
-
-## Running Tests
-
-Run the full suite of unit and integration tests:
+## Quick start
 
 ```bash
-PYTHONPATH=. pytest tests/ -v
+make model && make up
 ```
 
-All 19 test cases across all three phases pass cleanly.
+Then open **http://localhost:8000/ui/trace** and sign in as **admin / slrag**.
+
+- `make model` downloads the retrieval model (`all-MiniLM-L6-v2`, about 90 MB) into `models/`, then starts the Ollama service and pulls `qwen2.5:3b` into its volume. Ollama is only needed for the real-LLM mode. The Docker build downloads the retrieval model itself.
+- `make up` builds and starts the app with `docker compose up --build`.
+- Without `make`, for example on Windows, run the same steps directly:
+  ```bash
+  docker compose up -d ollama && docker compose exec ollama ollama pull qwen2.5:3b
+  docker compose up --build
+  ```
+- Without Docker:
+  ```bash
+  pip install -e . && python scripts/fetch_models.py
+  python -m uvicorn slrag.server.app:app --port 8000
+  ```
+
+In the UI, pick a scenario under **New Run** and press **Run** to replay it. Or drop a telemetry `.jsonl` file onto the page. Press `?` for the keyboard shortcuts.
+
+Change the UI credentials with the `SLRAG_UI_USERNAME` / `SLRAG_UI_PASSWORD` environment variables. Only `/ui/*` and `/api/*` are password-protected; `/ws/*` and `/health` are not.
+
+## Voice input
+
+Voice input requires **Chrome or Edge**. Click **🎤 Voice** in the top bar (or press `M`) and ask a question. The transcript streams into the pipeline as you speak. After 2.5 s of silence the utterance ends and the answer is drafted.
+
+The browser's speech service (Google or Microsoft) transcribes the audio; the server only receives text. It works on `localhost` or over HTTPS.
+
+## Switch to a real LLM
+
+The default `llm.backend: heuristic` is a deterministic stand-in drafter, so no model server is needed and results are reproducible. To draft with a real model:
+
+1. Set `llm.backend: ollama` in `config.yaml`.
+2. Run `make model`.
+3. Restart with `make up`.
+
+Inside Docker Compose, the app reaches Ollama at `http://ollama:11434` (`SLRAG_OLLAMA_URL`). Locally, it uses `llm.ollama_url`. If Ollama is unreachable, each call falls back to the heuristic path and the turn still completes.
+
+Note that `config.yaml` is frozen (`frozen: true`) and `tests/test_config_freeze.py` pins its hash. Changing the backend makes that test fail, by design: the published numbers were measured with the heuristic backend.
+
+## Run experiments
+
+```bash
+python -m slrag.cli replay eval/scenarios --split test --out out/ours_test.jsonl
+python scripts/run_experiments.py
+python scripts/compliance_audit.py
+```
+
+| Command | Writes | Contents |
+|---|---|---|
+| `slrag.cli replay` (`make replay`) | `out/summary.json`, `out/report.md` | metrics and gates, Ours vs B1 vs B0 |
+| `run_experiments.py` (`make experiments`) | `out/final_experiments.json` | ablations A1–A5; also served to the UI's Metrics tab |
+| `compliance_audit.py` (`make audit`) | `out/compliance.json` | the six compliance checks |
+
+The test split is the evaluation split. Thresholds are calibrated on the tune split (`scripts/calibrate.py --split tune` for the controller, `scripts/calibrate_uncertainty.py` for the uncertainty flag) and frozen before the test run.
+
+## Run tests
+
+```bash
+make test        # or: pytest tests/ -q
+```
+
+## Results (test split, frozen config `cfg_hash e3745a51d783adef`)
+
+| Gate | Condition | Measured | |
+|---|---|---|---|
+| G1 recall improvement | recall@10 Ours ≥ B1 | 1.000 vs 0.962 | ✅ |
+| G2 early retrieval | early-retrieval rate ≥ 0.80 | 0.950 | ✅ |
+| G3 groundedness preservation | groundedness Ours ≥ B1 | 1.000 vs 1.000 | ✅ |
+| G4 grounding | groundedness ≥ 0.85, hallucinated-ID rate = 0 | 1.000, 0.000 | ✅ |
+| G5 late-detail refinement | preservation = 1.0, no restarts, full lineage | 1.000, 0, 1.000 | ✅ |
+| G6 trace coverage | coverage = 1.0 | 1.000 | ✅ |
+
+Latency is virtual replay time and cost is notional.
+
+Retrieval fuses BM25 with sentence-transformers `all-MiniLM-L6-v2` embeddings (recall@10 1.000; dense-only 0.968, BM25-only 0.989). The benchmark report lists the remaining failures and limits.
+
+## Documentation
+
+- [docs/architecture_brief.pdf](docs/architecture_brief.pdf): architecture, data flow, trigger logic, grounding, trade-offs, deployment, limitations
+- [docs/benchmark_report.pdf](docs/benchmark_report.pdf): full metric table, gates G1–G6, ablations A1–A5, failure analysis
+- [data/CORPUS_README.md](data/CORPUS_README.md): the synthetic Nexora corpus
+
+## Submission Documents
+
+- [docs/SRM_Nexora_Submission.pptx](docs/SRM_Nexora_Submission.pptx): presentation slides
+- [docs/architecture_brief.pdf](docs/architecture_brief.pdf): architecture brief (≤ 6 pages)
+- [docs/benchmark_report.pdf](docs/benchmark_report.pdf): benchmark report with gates G1–G6 and ablations A1–A5
+- [docs/AI_DISCLOSURE.docx](docs/AI_DISCLOSURE.docx): AI usage disclosure form
+- Demo recording: [Google Drive folder](https://drive.google.com/drive/folders/1db1zRsrnWxcoQWzWN68MakRYZjPe73GJ?usp=sharing)
+
+## Layout
+
+```
+slrag/          engine: gateway, control (T0/T1/T2), plan, retrieval, pipeline, answer, state, server, ui
+config.yaml     the single source of every threshold (frozen)
+data/           corpus JSON + prebuilt index
+eval/scenarios/ tune / test scenario splits (evaluation only; not in the Docker image)
+scripts/        fetch_models, calibrate, calibrate_uncertainty, run_experiments, compliance_audit, validate_scenarios
+tests/          pytest suite
+docs/           architecture brief, benchmark report
+```

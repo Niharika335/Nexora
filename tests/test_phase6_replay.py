@@ -101,13 +101,11 @@ def test_no_test_leakage_into_calibration():
 
 
 def test_semantic_gold_chunks_exist_in_corpus():
+    from slrag.config import DEFAULT_CONFIG
+    from slrag.replay.baselines import build_index
+
     scenarios = generate_75_scenarios()
-    valid_ids = {
-        "doc-nexora-arch-c0", "doc-nexora-arch-c1", "doc-nexora-arch-c2",
-        "doc-streaming-engine-c0", "doc-streaming-engine-c1", "doc-streaming-engine-c2",
-        "doc-retrieval-hybrid-c0", "doc-retrieval-hybrid-c1",
-        "doc-telemetry-contracts-c0", "doc-telemetry-contracts-c1", "doc-telemetry-contracts-c2"
-    }
+    valid_ids = set(build_index(DEFAULT_CONFIG).chunks_map)  # chunk ids actually indexed by the replay harness
 
     for sc in scenarios:
         if sc["is_unanswerable"]:
@@ -156,14 +154,25 @@ async def test_baseline_restart_on_late_detail():
 
 
 def test_gate_evaluation_logic():
-    ours = {"recall@10": 1.0, "groundedness": 0.95, "ttft_p50": 75.0}
-    b1 = {"recall@10": 0.90, "groundedness": 0.95, "ttft_p50": 100.0}
-    b0 = {"recall@10": 0.80, "groundedness": None, "ttft_p50": 120.0}
+    ours = {"recall@10": 1.0, "groundedness": 0.95, "early_retrieval_rate": 0.82, "hallucinated_id_rate": 0.0, "trace_coverage": 1.0}
+    b1 = {"recall@10": 0.90, "groundedness": 0.95}
+    b0 = {"recall@10": 0.80, "groundedness": None}
 
     gates = GateEvaluator.evaluate_gates(ours, b1, b0)
     assert gates["G1_recall_improvement"]["status"] == "PASS"
+    assert gates["G2_early_retrieval"]["status"] == "PASS"
     assert gates["G3_groundedness_preservation"]["status"] == "PASS"
-    assert gates["G2_latency_ttft"]["status"] == "UNSPECIFIED"
+    assert gates["G4_grounding"]["status"] == "PASS"
+    assert gates["G6_trace_coverage"]["status"] == "PASS"
+
+    failing = dict(ours, early_retrieval_rate=0.79, hallucinated_id_rate=0.01, trace_coverage=0.99)
+    gates = GateEvaluator.evaluate_gates(failing, b1, b0)
+    assert gates["G2_early_retrieval"]["status"] == "FAIL"
+    assert gates["G4_grounding"]["status"] == "FAIL"
+    assert gates["G6_trace_coverage"]["status"] == "FAIL"
+    assert GateEvaluator.evaluate_gates(dict(ours, groundedness=0.84), b1, b0)["G4_grounding"]["status"] == "FAIL"
+    # A missing metric fails its gate instead of passing silently.
+    assert GateEvaluator.evaluate_gates({"recall@10": 1.0}, b1, b0)["G6_trace_coverage"]["status"] == "FAIL"
 
 
 def test_replay_runner_execution_and_reports(tmp_path):

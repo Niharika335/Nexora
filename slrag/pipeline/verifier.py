@@ -13,6 +13,7 @@ from slrag.contracts.events import (
     ClaimVerificationEvent,
 )
 from slrag.corpus.models import Chunk
+from slrag.nlp.lemmas import content_lemmas, has_negation, numbers, split_sentences
 from slrag.retrieval.dense import generate_bge_small_embedding
 from slrag.telemetry.bus import TelemetryBus, GLOBAL_BUS
 
@@ -39,28 +40,29 @@ class FailClosedVerifier:
         matched = sum(1 for w in c_words if w in doc_words)
         overlap = matched / len(c_words)
 
-        passed = overlap >= self.config.lexical_threshold
+        passed = overlap >= self.config.lexical
         return CheckResult(
             name="lexical",
             passed=passed,
             score=round(overlap, 3),
-            details=f"Lexical overlap={overlap:.2f} (threshold={self.config.lexical_threshold})",
+            details=f"Lexical overlap={overlap:.2f} (threshold={self.config.lexical})",
         )
 
     def check_semantic(self, claim_text: str, cited_text: str) -> CheckResult:
-        """2. Semantic Check: Cosine similarity between claim embedding and cited chunk embedding."""
+        """2. Semantic Check: cosine similarity between the claim and the cited text, taking the better of the
+        whole cited text and its best-matching sentence (a short claim drawn from one sentence of a long
+        chunk is otherwise diluted by the rest of the chunk)."""
         c_vec = generate_bge_small_embedding(claim_text)
-        d_vec = generate_bge_small_embedding(cited_text)
-
-        sim = float(np.dot(c_vec, d_vec))
+        passages = [cited_text] + [s for s in split_sentences(cited_text) if s.strip() and s.strip() != cited_text.strip()]
+        sim = max(float(np.dot(c_vec, generate_bge_small_embedding(p))) for p in passages)
         score = (sim + 1.0) / 2.0  # Normalize to [0, 1]
 
-        passed = score >= self.config.semantic_threshold
+        passed = score >= self.config.semantic
         return CheckResult(
             name="semantic",
             passed=passed,
             score=round(score, 3),
-            details=f"Semantic similarity={score:.2f} (threshold={self.config.semantic_threshold})",
+            details=f"Semantic similarity={score:.2f} (threshold={self.config.semantic})",
         )
 
     def check_coreference(self, claim_text: str, cited_text: str) -> CheckResult:
@@ -119,30 +121,46 @@ class FailClosedVerifier:
         previously_verified: List[Claim],
         cited_text: str,
     ) -> CheckResult:
-        """5. Consistency Check: Verifies non-contradiction with ledger and context."""
-        # Simple negation detection check against cited text
-        claim_has_neg = any(w in claim_text.lower().split() for w in ("not", "never", "cannot", "fake"))
-        doc_has_neg = any(w in cited_text.lower().split() for w in ("not", "never", "cannot", "fake"))
+        """5. Consistency Check: non-contradiction with the cited evidence and with the ledger.
 
-        if claim_has_neg != doc_has_neg and ("threshold" in claim_text.lower() or "tolerance" in claim_text.lower()):
-            # Detect polarity flip
-            pass
+        Fails if (a) the claim's negation polarity differs from the cited sentence it is closest
+        to, (b) the claim states a number absent from the cited text, or (c) it restates a
+        previously verified claim's proposition with flipped negation or different numbers.
+        """
+        def fail(details: str) -> CheckResult:
+            return CheckResult(name="consistency", passed=False, score=0.0, details=details)
 
-        # Check against previous ledger claims for conflicting direct assertions
+        claim_lemmas = content_lemmas(claim_text)
+
+        # (a) Negation parity against the most lexically similar cited sentence
+        sentences = split_sentences(cited_text)
+        best_sentence = max(sentences, key=lambda s: len(claim_lemmas & content_lemmas(s)))
+        if has_negation(claim_text) != has_negation(best_sentence):
+            return fail(f"Negation polarity differs from cited sentence: '{best_sentence}'")
+
+        # (b) Every number in the claim must appear in the cited text
+        missing_numbers = numbers(claim_text) - numbers(cited_text)
+        if missing_numbers:
+            return fail(f"Numbers not present in cited text: {sorted(missing_numbers)}")
+
+        # (c) Contradiction with previously verified claims about the same proposition
+        claim_words = claim_lemmas - numbers(claim_text)
         for prev in previously_verified:
-            if claim_text.lower() in prev.text.lower() and "not" in prev.text.lower() != ("not" in claim_text.lower()):
-                return CheckResult(
-                    name="consistency",
-                    passed=False,
-                    score=0.0,
-                    details=f"Claim contradicts previously verified claim: '{prev.text}'",
-                )
+            prev_words = content_lemmas(prev.text) - numbers(prev.text)
+            union = claim_words | prev_words
+            if not union or len(claim_words & prev_words) / len(union) < 0.6:
+                continue
+            if has_negation(claim_text) != has_negation(prev.text):
+                return fail(f"Claim negates previously verified claim '{prev.claim_id}': '{prev.text}'")
+            claim_nums, prev_nums = numbers(claim_text), numbers(prev.text)
+            if claim_nums and prev_nums and claim_nums != prev_nums:
+                return fail(f"Claim changes the numbers of previously verified claim '{prev.claim_id}': '{prev.text}'")
 
         return CheckResult(
             name="consistency",
             passed=True,
             score=1.0,
-            details="Claim is consistent with knowledge base and prior turn history.",
+            details="Claim is consistent with cited evidence and prior verified claims.",
         )
 
     def verify_claim(
@@ -218,13 +236,7 @@ class FailClosedVerifier:
         )
 
         status = ClaimStatus.VERIFIED if passed else ClaimStatus.REJECTED
-        updated_claim = Claim(
-            claim_id=claim.claim_id,
-            text=claim.text,
-            doc_ids=claim.doc_ids,
-            status=status,
-            turn_id=turn_id,
-        )
+        updated_claim = claim.model_copy(update={"verification_status": status, "turn_id": turn_id})
 
         event = ClaimVerificationEvent(
             session_id=session_id,

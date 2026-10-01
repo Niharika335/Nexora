@@ -11,12 +11,28 @@ requires-python = ">=3.10"
 dependencies = [
     "pydantic>=2.0.0",
     "fastapi>=0.100.0",
-    "uvicorn>=0.20.0",
+    "uvicorn[standard]>=0.20.0",  # [standard] brings the WebSocket implementation /ws/stream and /ws/telemetry need
     "click>=8.0.0",
     "numpy>=1.24.0",
+    "pyyaml>=6.0",
     "pytest>=7.0.0",
-    "httpx>=0.24.0"
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.24.0",
+    "sentence-transformers>=3.0"  # dense retrieval (all-MiniLM-L6-v2 on CPU); model: python scripts/fetch_models.py
 ]
+
+[project.optional-dependencies]
+# Dependency-parse splitter for the planner fallback (also needs: python -m spacy download en_core_web_sm).
+nlp = ["spacy>=3.7"]
 
 [project.scripts]
 slrag = "slrag.cli:cli"
+
+[tool.setuptools.packages.find]
+include = ["slrag*"]
+
+[tool.pytest.ini_options]
+markers = ["integration: end-to-end replay tests (select with -m integration)"]
+
+[tool.setuptools.package-data]
+slrag = ["ui/*.html", "ui/*.json"]

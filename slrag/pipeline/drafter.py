@@ -29,7 +29,7 @@ class ClaimDrafter:
                 Claim(
                     text=clean_text,
                     doc_ids=cited_ids,
-                    status=ClaimStatus.PENDING,
+                    verification_status=ClaimStatus.PENDING,
                     turn_id=turn_id,
                 )
             )
@@ -43,7 +43,7 @@ class ClaimDrafter:
 
         for sent in sentences:
             citations = self.CITATION_REGEX.findall(sent)
-            clean_sent = self.CITATION_REGEX.sub("", sent).strip()
+            clean_sent = re.sub(r"\s+([.!?,;:])", r"\1", self.CITATION_REGEX.sub("", sent)).strip()
             if not clean_sent:
                 continue
 
@@ -51,7 +51,7 @@ class ClaimDrafter:
                 Claim(
                     text=clean_sent,
                     doc_ids=citations,
-                    status=ClaimStatus.PENDING,
+                    verification_status=ClaimStatus.PENDING,
                     turn_id=turn_id,
                 )
             )

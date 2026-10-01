@@ -7,6 +7,7 @@ import time
 from typing import Any, Dict, List
 
 from slrag.contracts.events import MetricsSnapshot
+from slrag.replay.metrics import MetricCalculator, calculate_percentile  # noqa: F401  (replay metrics live in slrag.replay)
 
 
 class MetricsCollector:

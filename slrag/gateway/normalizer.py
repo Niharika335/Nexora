@@ -16,9 +16,19 @@ class EventNormalizer:
 
         # Map text synonyms
         if "text" not in normalized:
-            for alias in ("transcript", "content", "message", "utterance"):
+            for alias in ("chunk", "transcript", "content", "message", "utterance"):
                 if alias in normalized:
                     normalized["text"] = str(normalized[alias])
+                    break
+
+        # Map stream timestamp synonyms (seconds from stream start)
+        if "ts_s" not in normalized:
+            for alias in ("timestamp_s", "timestamp", "t"):
+                if alias in normalized:
+                    try:
+                        normalized["ts_s"] = float(normalized[alias])
+                    except (ValueError, TypeError):
+                        pass
                     break
 
         # Map seq synonyms
@@ -53,18 +63,28 @@ class EventNormalizer:
 
         return normalized
 
-    def process_transcript_text(self, new_text: str, is_cumulative: Optional[bool] = None) -> Tuple[str, str]:
-        """Process incoming speech text.
-        
+    @staticmethod
+    def _norm(text: str) -> str:
+        """Lowercase, collapse whitespace, strip leading/trailing ellipses."""
+        t = " ".join(text.lower().split())
+        for ell in ("…", "..."):
+            t = t.strip().removeprefix(ell).removesuffix(ell)
+        return t.strip()
+
+    def merge(self, new_text: str, is_cumulative: Optional[bool] = None) -> Tuple[str, str, str]:
+        """Merge an incoming chunk into the utterance buffer.
+
+        Cumulative if norm(new) starts with norm(buffer) and is longer (buffer is replaced);
+        otherwise delta (appended with one space).
+
         Returns:
-            (delta_text, current_full_text)
+            (delta_text, current_full_text, merge_mode)
         """
         new_text = new_text.strip()
-        
-        # Auto-detect cumulative if not specified
+
         if is_cumulative is None:
-            # If new_text starts with the existing cumulative text, it's cumulative
-            is_cumulative = bool(self._cumulative_text and new_text.startswith(self._cumulative_text))
+            norm_new, norm_buf = self._norm(new_text), self._norm(self._cumulative_text)
+            is_cumulative = bool(norm_buf) and norm_new.startswith(norm_buf) and len(norm_new) > len(norm_buf)
 
         if is_cumulative:
             if new_text.startswith(self._cumulative_text):
@@ -72,14 +92,24 @@ class EventNormalizer:
             else:
                 delta = new_text
             self._cumulative_text = new_text
-        else:
-            delta = new_text
-            if self._cumulative_text:
-                self._cumulative_text = f"{self._cumulative_text} {delta}".strip()
-            else:
-                self._cumulative_text = delta
+            return delta, self._cumulative_text, "cumulative"
 
-        return delta, self._cumulative_text
+        delta = new_text
+        self._cumulative_text = f"{self._cumulative_text} {delta}".strip() if self._cumulative_text else delta
+        return delta, self._cumulative_text, "delta"
+
+    def process_transcript_text(self, new_text: str, is_cumulative: Optional[bool] = None) -> Tuple[str, str]:
+        """Process incoming speech text.
+
+        Returns:
+            (delta_text, current_full_text)
+        """
+        delta, full, _ = self.merge(new_text, is_cumulative)
+        return delta, full
+
+    @property
+    def buffer(self) -> str:
+        return self._cumulative_text
 
     def reset_utterance(self) -> str:
         """Reset accumulated text state at utterance boundary and return full utterance."""

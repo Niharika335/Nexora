@@ -1,0 +1,39 @@
+# One command: `make up` (docker compose up --build). The UI is at http://localhost:8000/ui/trace.
+# llm.backend in config.yaml decides whether the app uses the ollama service; with the default
+# (heuristic) it runs without it. `make model` pulls the model into the ollama volume once.
+services:
+  ollama:
+    image: ollama/ollama:0.5.7
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [internal, default]
+
+  app:
+    build: .
+    image: slrag-app
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      SLRAG_OLLAMA_URL: http://ollama:11434
+      SLRAG_UI_USERNAME: ${SLRAG_UI_USERNAME:-admin}
+      SLRAG_UI_PASSWORD: ${SLRAG_UI_PASSWORD:-slrag}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./eval:/app/eval:ro   # demo scenarios for the UI; not baked into the image
+      - ./out:/app/out
+    networks: [internal, default]
+
+networks:
+  internal:
+    internal: true
+
+volumes:
+  ollama:

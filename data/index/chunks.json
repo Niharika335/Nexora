@@ -1,122 +1,1397 @@
 [
   {
-    "chunk_id": "DOC001\u00a7intro",
-    "doc_id": "DOC001",
-    "section_id": "intro",
-    "section_title": "Introduction to Qubits",
-    "text": "Quantum computing harnesses the principles of quantum mechanics, including superposition and entanglement, to perform computations exponentially faster for certain problems. Unlike classical bits which exist strictly in state 0 or 1, a qubit exists as a linear combination alpha|0> + beta|1>. Quantum gates manipulate these complex amplitudes unitarily to perform algorithms such as Shor's factoring and Grover's search.",
-    "token_count": 74,
+    "chunk_id": "nx-product-overview\u00a7what-is-nexora",
+    "doc_id": "nx-product-overview",
+    "section_id": "what-is-nexora",
+    "section_title": "What Nexora Is",
+    "text": "Nexora is a B2B SaaS platform for planning, selling and running professional events. It combines ticketing, attendee tracking, an analytics dashboard, virtual and hybrid event hosting, and an AI assistant called Nexora Copilot in one workspace. Event teams use Nexora to launch a registration page, sell tickets, check attendees in on site and report on results without switching tools. The platform is delivered from the Nexora Cloud and needs no installation.",
+    "token_count": 82,
+    "char_start": 0,
+    "char_end": 461,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "What Nexora Is"
+    },
+    "chunk_hash": "dd8e44d39e03bc54213e61e414bc279a7b56a8542bfb561e2c93b3d48dc00d58"
+  },
+  {
+    "chunk_id": "nx-product-overview\u00a7who-uses-it",
+    "doc_id": "nx-product-overview",
+    "section_id": "who-uses-it",
+    "section_title": "Who Uses Nexora",
+    "text": "Nexora is built for corporate event teams, conference organizers, associations and agencies that run between 5 and 500 events a year. Typical events are user conferences, trade shows, partner summits, training days and webinars with 50 to 25,000 attendees. Marketing teams use the CRM integrations to turn attendees into pipeline, while operations teams rely on on-site check-in and badge printing. More than 1,400 organizations in 38 countries run events on Nexora.",
+    "token_count": 89,
+    "char_start": 0,
+    "char_end": 466,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Who Uses Nexora"
+    },
+    "chunk_hash": "e6b7e4fc6df94505ffc1b87b180f872cd8ff5d176ee9499f68a886ec8f45f2d5"
+  },
+  {
+    "chunk_id": "nx-product-overview\u00a7platform-architecture",
+    "doc_id": "nx-product-overview",
+    "section_id": "platform-architecture",
+    "section_title": "Platform Architecture",
+    "text": "Every Nexora customer gets a workspace that contains events, attendees, ticket types, sessions and reports. Workspaces are hosted in either the US region (Virginia) or the EU region (Frankfurt), chosen at signup. The web app, the Nexora Check-in mobile app for iOS and Android, and the public REST API all operate on the same workspace data. Changes made in one place, such as a refund issued in the web app, are visible in the API and the mobile app within seconds.",
+    "token_count": 99,
+    "char_start": 0,
+    "char_end": 466,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Platform Architecture"
+    },
+    "chunk_hash": "47317b57e2c62624eb154b4a2411b80489a0011d86a5c27d682d22e169c56467"
+  },
+  {
+    "chunk_id": "nx-product-overview\u00a7product-editions",
+    "doc_id": "nx-product-overview",
+    "section_id": "product-editions",
+    "section_title": "Product Editions",
+    "text": "Nexora is sold in three editions: Starter, Growth and Enterprise. Starter covers single events with ticketing and basic check-in. Growth adds virtual events, the analytics dashboard, the HubSpot, Slack and Zapier integrations and API access for multiple events. Enterprise adds the Salesforce integration, single sign-on with SAML, data residency controls, a dedicated customer success manager and custom contract terms.",
+    "token_count": 75,
     "char_start": 0,
     "char_end": 420,
     "chunk_index": 0,
     "metadata": {
-      "section_title": "Introduction to Qubits"
+      "section_title": "Product Editions"
     },
-    "chunk_hash": "955aa25e80c2866539a4b6a9394a38588a52e9ff280554b2a774ef5572005b11"
+    "chunk_hash": "e694cc01703cf3b080aba4603a07a13feeaa3fb60472a68924f39349ad223d62"
   },
   {
-    "chunk_id": "DOC001\u00a7error_correction",
-    "doc_id": "DOC001",
-    "section_id": "error_correction",
-    "section_title": "Surface Codes and Fault Tolerance",
-    "text": "Fault-tolerant quantum computing requires quantum error correction codes to protect fragile quantum states from environmental decoherence and gate infidelities. The surface code is the leading architecture, arranging physical qubits in a 2D square lattice with alternating syndrome measurements of star and plaquette stabilizers (X and Z stabilizers). A threshold error rate of approximately 1 percent makes it feasible for scalable topological quantum computers.",
+    "chunk_id": "nx-feature-ticketing\u00a7ticket-types",
+    "doc_id": "nx-feature-ticketing",
+    "section_id": "ticket-types",
+    "section_title": "Ticket Types",
+    "text": "Organizers create ticket types such as General Admission, VIP, Early Bird, Student and Group tickets, each with its own price, capacity and sales window. A ticket type can be free, paid, or invitation-only with an access code. Paid tickets are charged through Stripe in 28 currencies, and Nexora adds a platform fee of 2.5% per paid ticket on Starter and 1.5% on Growth; Enterprise contracts can remove the per-ticket fee. Taxes such as VAT are calculated automatically from the buyer's billing country.",
+    "token_count": 107,
+    "char_start": 0,
+    "char_end": 503,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Ticket Types"
+    },
+    "chunk_hash": "e49cfda894486460a78688235f5346f898f711388959085996c485087d47eb5d"
+  },
+  {
+    "chunk_id": "nx-feature-ticketing\u00a7discount-codes",
+    "doc_id": "nx-feature-ticketing",
+    "section_id": "discount-codes",
+    "section_title": "Discount Codes and Pricing Rules",
+    "text": "Discount codes can take a fixed amount or a percentage off, apply to selected ticket types, and expire on a date or after a maximum number of uses. Pricing rules raise prices automatically when a sales window closes, for example moving from Early Bird to Standard on a set date. Group pricing gives a lower per-ticket price when a buyer purchases 5 or more tickets in one order. Every discount redemption is recorded on the order for reporting.",
+    "token_count": 87,
+    "char_start": 0,
+    "char_end": 444,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Discount Codes and Pricing Rules"
+    },
+    "chunk_hash": "fe8a51ff79206937248d4fdc99d786a9973391af5032d73e42e63c3d166a6d53"
+  },
+  {
+    "chunk_id": "nx-feature-ticketing\u00a7waitlists",
+    "doc_id": "nx-feature-ticketing",
+    "section_id": "waitlists",
+    "section_title": "Waitlists",
+    "text": "When a ticket type sells out, Nexora can open a waitlist instead of closing sales. People on the waitlist are offered a released ticket in the order they joined, and each offer is held for 24 hours before it moves to the next person. Organizers can also release extra capacity manually, which automatically notifies the waitlist. Waitlists were introduced in release v2.3.",
     "token_count": 71,
     "char_start": 0,
-    "char_end": 463,
+    "char_end": 372,
     "chunk_index": 0,
     "metadata": {
-      "section_title": "Surface Codes and Fault Tolerance"
+      "section_title": "Waitlists"
     },
-    "chunk_hash": "c87b6f405978c8a6ebd93ff71a0bb0b3e54bd636c394fb5f38cd0f45eac8ad81"
+    "chunk_hash": "689abf65af9b75dd97fcdb0ed9b068765bad24e4153e76d6615e5fcf82629409"
   },
   {
-    "chunk_id": "DOC002\u00a7raft_consensus",
-    "doc_id": "DOC002",
-    "section_id": "raft_consensus",
-    "section_title": "Raft Leader Election and Log Replication",
-    "text": "Raft is a distributed consensus algorithm designed for understandability. A Raft cluster consists of several nodes, typically five, allowing the system to tolerate two failures. Nodes are in one of three states: Leader, Follower, or Candidate. In normal operation, there is exactly one leader and all other nodes are followers. The leader accepts log entries from clients, replicates them across a majority quorum of followers, and applies committed entries to its state machine.",
+    "chunk_id": "nx-feature-ticketing\u00a7refunds-transfers",
+    "doc_id": "nx-feature-ticketing",
+    "section_id": "refunds-transfers",
+    "section_title": "Refunds and Transfers",
+    "text": "Organizers set a refund policy per event, such as full refunds until 14 days before the event and no refunds afterwards. Refunds are issued from the order page in the web app or through the POST /v2/orders/{id}/refund endpoint and return the ticket to inventory. Attendees can transfer a ticket to a colleague from their confirmation email until the event's transfer deadline. Nexora keeps the platform fee on refunded tickets unless the event is cancelled by the organizer.",
+    "token_count": 93,
+    "char_start": 0,
+    "char_end": 474,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Refunds and Transfers"
+    },
+    "chunk_hash": "cc0118cbda2fad7f22484aad82820adcc67b8fd5ed5c790cae15e35f9f3214da"
+  },
+  {
+    "chunk_id": "nx-feature-ticketing\u00a7check-in",
+    "doc_id": "nx-feature-ticketing",
+    "section_id": "check-in",
+    "section_title": "On-site Check-in",
+    "text": "The Nexora Check-in app scans the QR code on each ticket and marks the attendee as checked in, even without an internet connection. Offline scans are stored on the device and synced when the connection returns, so a ticket cannot be admitted twice once devices sync. Badge printing works with Zebra and Brother label printers over Bluetooth or USB. Check-in staff can search attendees by name or email when a guest does not have the QR code.",
+    "token_count": 87,
+    "char_start": 0,
+    "char_end": 441,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "On-site Check-in"
+    },
+    "chunk_hash": "248b9226c57af834e398cb5dd6a901e9366bad29db046b611bff39c24833e10c"
+  },
+  {
+    "chunk_id": "nx-feature-attendee-tracking\u00a7attendee-profiles",
+    "doc_id": "nx-feature-attendee-tracking",
+    "section_id": "attendee-profiles",
+    "section_title": "Attendee Profiles",
+    "text": "Every registration creates an attendee profile with contact details, ticket type, company, job title and the answers to custom registration questions. Profiles are shared across events in the same workspace, so a returning attendee is recognised and their history is kept in one place. Organizers can add tags such as Speaker, Sponsor or VIP to profiles and filter lists by tag. Profile data is subject to the data retention policy described in the Privacy and GDPR document.",
     "token_count": 86,
     "char_start": 0,
-    "char_end": 479,
+    "char_end": 475,
     "chunk_index": 0,
     "metadata": {
-      "section_title": "Raft Leader Election and Log Replication"
+      "section_title": "Attendee Profiles"
     },
-    "chunk_hash": "010db04208500259d299a7bf925dbf3736d90ffe4bfb2b64802e8b4882e4a275"
+    "chunk_hash": "22b5f14150887e6bd73df142fa32e64ec76abd58989f7ff82902bb4ec3e7d00c"
   },
   {
-    "chunk_id": "DOC002\u00a7vector_clocks",
-    "doc_id": "DOC002",
-    "section_id": "vector_clocks",
-    "section_title": "Causality and Logical Vector Clocks",
-    "text": "Vector clocks are an algorithm for generating a partial ordering of events in a distributed system and detecting causality violations. Each node maintains an integer vector of size N, incrementing its own index on local events and including its vector clock in transmitted network messages. When receiving a message, a node takes the element-wise maximum across all entries and increments its own clock, thereby preserving the Lamport happens-before relation.",
-    "token_count": 79,
-    "char_start": 0,
-    "char_end": 459,
-    "chunk_index": 0,
-    "metadata": {
-      "section_title": "Causality and Logical Vector Clocks"
-    },
-    "chunk_hash": "fc376475e831373366577427a0b9acf7ce285d246eb0c66ac7513e6ab6b5d443"
-  },
-  {
-    "chunk_id": "DOC003\u00a7lsm_trees",
-    "doc_id": "DOC003",
-    "section_id": "lsm_trees",
-    "section_title": "Log-Structured Merge Trees and Compaction",
-    "text": "Log-Structured Merge Trees (LSM Trees) are write-optimized storage engines widely used in systems like RocksDB and Cassandra. Writes are initially appended to a sequential write-ahead log (WAL) and inserted into an in-memory sorted MemTable. When the MemTable fills up, it is flushed to disk as an immutable SSTable (Sorted String Table). Background tiered or leveled compaction merges overlapping SSTables and purges tombstoned keys.",
-    "token_count": 82,
-    "char_start": 0,
-    "char_end": 434,
-    "chunk_index": 0,
-    "metadata": {
-      "section_title": "Log-Structured Merge Trees and Compaction"
-    },
-    "chunk_hash": "b456cd052a3a1890463094e47013ce938ede11d11055420383edc318105d1218"
-  },
-  {
-    "chunk_id": "DOC003\u00a7b_trees",
-    "doc_id": "DOC003",
-    "section_id": "b_trees",
-    "section_title": "B-Tree and B+Tree Page Management",
-    "text": "B+Trees organize data hierarchically into fixed-size disk pages (typically 4KB to 16KB). Internal nodes store keys and child page pointers, while all records reside in leaf nodes connected as a doubly-linked list. This layout provides logarithmic lookup time O(log N) and efficient sequential range scans, making B+Trees the standard indexing structure in relational engines like PostgreSQL and MySQL InnoDB.",
-    "token_count": 77,
+    "chunk_id": "nx-feature-attendee-tracking\u00a7session-attendance",
+    "doc_id": "nx-feature-attendee-tracking",
+    "section_id": "session-attendance",
+    "section_title": "Session Attendance",
+    "text": "Session attendance is tracked by scanning badges at room entrances with the Check-in app or by counting joins for virtual sessions. Each scan records the attendee, the session and the time, which feeds the attendance charts in the analytics dashboard. Organizers can cap session capacity and turn on session pre-registration to avoid overfull rooms. Attendance data can be exported per session as a CSV file.",
+    "token_count": 75,
     "char_start": 0,
     "char_end": 408,
     "chunk_index": 0,
     "metadata": {
-      "section_title": "B-Tree and B+Tree Page Management"
+      "section_title": "Session Attendance"
     },
-    "chunk_hash": "a9be1c37f954d9914712b916d13435b275fd83b6b014166771b1a194963321d7"
+    "chunk_hash": "82a5be515f20c2f25a97ac045967c20eeebcb417b9558b8ece6da9d31a5682f4"
   },
   {
-    "chunk_id": "DOC004\u00a7hnsw_indexing",
-    "doc_id": "DOC004",
-    "section_id": "hnsw_indexing",
-    "section_title": "Hierarchical Navigable Small World Graphs",
-    "text": "HNSW (Hierarchical Navigable Small World) is a graph-based algorithm for approximate nearest neighbor (ANN) search in high-dimensional vector spaces. It constructs a multi-layer graph where upper layers have longer skip-links for fast routing and lower layers contain denser local connections. HNSW provides sub-linear logarithmic search time with high recall for dense vector embeddings like BGE and OpenAI text-embedding.",
+    "chunk_id": "nx-feature-attendee-tracking\u00a7lead-retrieval",
+    "doc_id": "nx-feature-attendee-tracking",
+    "section_id": "lead-retrieval",
+    "section_title": "Lead Retrieval for Exhibitors",
+    "text": "Exhibitors use the lead retrieval mode of the Check-in app to scan attendee badges at their booth. Each captured lead includes the attendee's name, company, job title and email, plus notes and a hot, warm or cold rating added by booth staff. Attendees must have given consent to share their details with exhibitors during registration, and leads without consent show only the name. Exhibitors download their leads as CSV or push them to their own CRM after the event.",
+    "token_count": 92,
+    "char_start": 0,
+    "char_end": 467,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Lead Retrieval for Exhibitors"
+    },
+    "chunk_hash": "7b471f18376269c6647e39527daada0528e7f8702e3fb25ed44ea12303be0c25"
+  },
+  {
+    "chunk_id": "nx-feature-attendee-tracking\u00a7engagement-score",
+    "doc_id": "nx-feature-attendee-tracking",
+    "section_id": "engagement-score",
+    "section_title": "Engagement Score",
+    "text": "Nexora calculates an engagement score from 0 to 100 for every attendee. The score combines session attendance, time spent in virtual sessions, poll and Q&A participation, booth visits and meeting bookings. Marketing teams use the engagement score to prioritize follow-up, and it syncs to Salesforce and HubSpot as a contact field. The scoring weights can be adjusted per event on Growth and Enterprise.",
+    "token_count": 75,
+    "char_start": 0,
+    "char_end": 402,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Engagement Score"
+    },
+    "chunk_hash": "0fa83b5a73f4143da851c28afa985654f8c45dab631d2605e024b78c932b312f"
+  },
+  {
+    "chunk_id": "nx-feature-analytics\u00a7dashboard-widgets",
+    "doc_id": "nx-feature-analytics",
+    "section_id": "dashboard-widgets",
+    "section_title": "Dashboard Widgets",
+    "text": "The analytics dashboard shows registrations over time, ticket revenue, check-in rate, session attendance and average engagement score for each event. Widgets can be rearranged and filtered by ticket type, date range or attendee tag. A portfolio view compares up to 20 events side by side, which helps teams see which events drive the most revenue and pipeline. The analytics dashboard is included in the Growth and Enterprise plans.",
+    "token_count": 79,
+    "char_start": 0,
+    "char_end": 432,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Dashboard Widgets"
+    },
+    "chunk_hash": "29bb42a202a9e0db16ad4946d3ff7d6905466c006d4c5954271fd047f52ecaaf"
+  },
+  {
+    "chunk_id": "nx-feature-analytics\u00a7real-time-metrics",
+    "doc_id": "nx-feature-analytics",
+    "section_id": "real-time-metrics",
+    "section_title": "Real-time Metrics",
+    "text": "During a live event, the dashboard refreshes every 30 seconds with check-ins, current session occupancy and virtual audience size. Organizers can set alerts that post to Slack when check-ins exceed a threshold or a session reaches 90% of capacity. The live view is designed for command-center screens and shows no personal data. Real-time metrics were rebuilt in release v2.4 to support events with up to 25,000 concurrent attendees.",
+    "token_count": 87,
+    "char_start": 0,
+    "char_end": 433,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Real-time Metrics"
+    },
+    "chunk_hash": "dd3eb02518a6a5b7fedf10c6ded19af8c5ca00e422a2b08af320cc88b4b3a2f9"
+  },
+  {
+    "chunk_id": "nx-feature-analytics\u00a7exports-reports",
+    "doc_id": "nx-feature-analytics",
+    "section_id": "exports-reports",
+    "section_title": "Exports and Custom Reports",
+    "text": "Any table in the analytics dashboard can be exported as CSV or XLSX, and scheduled reports can be emailed daily or weekly. Custom reports let organizers pick fields from orders, attendees, sessions and leads and save the layout for reuse. Enterprise customers can stream event data to Snowflake or BigQuery through the data warehouse export added in v2.5. Exports respect the user's role, so a finance user can see revenue without seeing attendee contact details.",
+    "token_count": 87,
+    "char_start": 0,
+    "char_end": 463,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Exports and Custom Reports"
+    },
+    "chunk_hash": "ae68e2e876f8931fb08b19678b7bf83735d08a36be24b6f561a8f8fcee463c32"
+  },
+  {
+    "chunk_id": "nx-feature-analytics\u00a7roi-attribution",
+    "doc_id": "nx-feature-analytics",
+    "section_id": "roi-attribution",
+    "section_title": "ROI and Pipeline Attribution",
+    "text": "When the Salesforce or HubSpot integration is connected, Nexora attributes opportunities to events based on attendee contacts. The ROI report divides influenced pipeline and closed revenue by the event's recorded costs. Attribution uses a 90-day window after the event by default, which can be changed to 30 or 180 days. Attribution reports are available on the Enterprise plan and in the Growth plan with the HubSpot integration.",
     "token_count": 77,
+    "char_start": 0,
+    "char_end": 430,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "ROI and Pipeline Attribution"
+    },
+    "chunk_hash": "05985c2855bb68002fc75f794909276128ef3da7db5fd70794295218d4986724"
+  },
+  {
+    "chunk_id": "nx-feature-virtual-events\u00a7streaming",
+    "doc_id": "nx-feature-virtual-events",
+    "section_id": "streaming",
+    "section_title": "Live Streaming",
+    "text": "Nexora Stage is the built-in streaming studio for virtual events. Speakers join from a browser and producers switch between cameras, screen shares and pre-recorded videos. Streams are delivered at up to 1080p with automatic adaptive bitrate and an average latency of about 8 seconds. Organizers can also stream from external tools such as OBS by using the RTMP ingest URL shown in the event settings.",
+    "token_count": 74,
+    "char_start": 0,
+    "char_end": 400,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Live Streaming"
+    },
+    "chunk_hash": "7d4d7b0fe05ec2d54eb91823d49284345bfb1c4d152f40aae90bab0d01528905"
+  },
+  {
+    "chunk_id": "nx-feature-virtual-events\u00a7hybrid-events",
+    "doc_id": "nx-feature-virtual-events",
+    "section_id": "hybrid-events",
+    "section_title": "Hybrid Events",
+    "text": "A hybrid event combines an in-person venue with a virtual audience on the same agenda. In-person attendees check in with the Check-in app while virtual attendees join sessions from the event portal, and both appear in the same attendee list and reports. Q&A and polls are shared, so questions from the room and from online viewers go to one moderation queue. Hybrid event support became generally available in release v2.4.",
+    "token_count": 86,
     "char_start": 0,
     "char_end": 423,
     "chunk_index": 0,
     "metadata": {
-      "section_title": "Hierarchical Navigable Small World Graphs"
+      "section_title": "Hybrid Events"
     },
-    "chunk_hash": "555e059f15ff9c640096b76a23f9cab5c64a1f339360439a89b3d120bef28198"
+    "chunk_hash": "efb1a908593acf4667886bfa20a07a6f09c4b2a793a1413d5b23bec8e7950d2f"
   },
   {
-    "chunk_id": "DOC004\u00a7bm25_lexical",
-    "doc_id": "DOC004",
-    "section_id": "bm25_lexical",
-    "section_title": "Okapi BM25 Ranking and Inverted Indices",
-    "text": "Okapi BM25 is a non-linear term frequency and inverse document frequency (IDF) ranking function. It uses parameters k1 to control term frequency saturation and b to tune document length normalization. BM25 excels at exact keyword matching, rare entity lookup, and acronym matching where semantic dense models often suffer from vocabulary mismatch or out-of-vocabulary hallucinations.",
-    "token_count": 67,
+    "chunk_id": "nx-feature-virtual-events\u00a7breakout-rooms",
+    "doc_id": "nx-feature-virtual-events",
+    "section_id": "breakout-rooms",
+    "section_title": "Breakout Rooms and Networking",
+    "text": "Virtual sessions can split the audience into breakout rooms of 2 to 50 people for discussions or workshops. Networking lounges let attendees start one-to-one video meetings, and the meeting scheduler books 15- or 30-minute slots between attendees and sponsors. Nexora Copilot suggests who to meet based on job titles and interests. Breakout rooms close automatically when the host ends the session.",
+    "token_count": 73,
     "char_start": 0,
-    "char_end": 383,
+    "char_end": 398,
     "chunk_index": 0,
     "metadata": {
-      "section_title": "Okapi BM25 Ranking and Inverted Indices"
+      "section_title": "Breakout Rooms and Networking"
     },
-    "chunk_hash": "ed0cde8600e47e8e22cbeba1cfc65fe17d568ef22b2ed1f81aec59a42d44c092"
+    "chunk_hash": "b1ace2243f0ad68a88d3e03d45c8bd9a578f672685e4f840cdd9be52efed0f9d"
+  },
+  {
+    "chunk_id": "nx-feature-virtual-events\u00a7recordings",
+    "doc_id": "nx-feature-virtual-events",
+    "section_id": "recordings",
+    "section_title": "Recordings and On-demand",
+    "text": "Every streamed session is recorded automatically and becomes available on demand in the event portal about 15 minutes after it ends. Organizers can trim recordings, add captions and choose whether on-demand content is open to all registrants or only to paid ticket types. Recordings are stored for 12 months and can be downloaded as MP4 files. Automatic captions in 12 languages were added in release v2.5.",
+    "token_count": 75,
+    "char_start": 0,
+    "char_end": 406,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Recordings and On-demand"
+    },
+    "chunk_hash": "316a85ab564bbfe12cd8b3f843feae2a67a8db0fb697319d7ca17fa2e0e9bf5d"
+  },
+  {
+    "chunk_id": "nx-feature-copilot\u00a7agenda-builder",
+    "doc_id": "nx-feature-copilot",
+    "section_id": "agenda-builder",
+    "section_title": "AI Agenda Builder",
+    "text": "The AI agenda builder drafts an event agenda from a short brief, such as the event goal, audience and number of tracks. It proposes session titles, time slots and room assignments and flags speakers who are double-booked. Organizers review and edit every suggestion before publishing, and nothing is published automatically. The agenda builder launched as a beta in v2.3 and became generally available in v2.4.",
+    "token_count": 79,
+    "char_start": 0,
+    "char_end": 410,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "AI Agenda Builder"
+    },
+    "chunk_hash": "86b428d42f23aa9abe57dd17ae42929030457d03f66e2564db3792e3406930e9"
+  },
+  {
+    "chunk_id": "nx-feature-copilot\u00a7smart-matchmaking",
+    "doc_id": "nx-feature-copilot",
+    "section_id": "smart-matchmaking",
+    "section_title": "Smart Matchmaking",
+    "text": "Smart matchmaking recommends attendees, speakers and sponsors for each attendee to meet. Recommendations use registration answers, job titles, stated interests and session attendance, and attendees can accept, skip or book a meeting directly. Attendees can opt out of matchmaking in their profile settings. Smart matchmaking was released in v2.5 and is available on Growth and Enterprise.",
+    "token_count": 67,
+    "char_start": 0,
+    "char_end": 388,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Smart Matchmaking"
+    },
+    "chunk_hash": "2bebab8aabdb12e99fc5f2ab7c91172c79fa4a2d1b66ccab5ef530e5de9a1348"
+  },
+  {
+    "chunk_id": "nx-feature-copilot\u00a7session-summaries",
+    "doc_id": "nx-feature-copilot",
+    "section_id": "session-summaries",
+    "section_title": "AI Session Summaries",
+    "text": "After a recorded session, Copilot generates a summary with key points and action items from the transcript. Summaries are attached to the on-demand recording and can be included in the post-event follow-up email. Organizers can edit or delete a summary before attendees see it. Transcripts and summaries are processed in the workspace's hosting region and are not used to train third-party models.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 397,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "AI Session Summaries"
+    },
+    "chunk_hash": "9a6dbef853ffdb4954430846beaaacdc92bf72a24719b7de24f76ba9d5f02d7b"
+  },
+  {
+    "chunk_id": "nx-feature-copilot\u00a7copilot-limits",
+    "doc_id": "nx-feature-copilot",
+    "section_id": "copilot-limits",
+    "section_title": "Copilot Usage Limits",
+    "text": "Starter workspaces include 50 Copilot requests per month, Growth includes 1,000 and Enterprise includes an unlimited allowance under fair use. A request is one agenda draft, one matchmaking batch or one session summary. Usage is shown on the Billing page and resets on the first day of each billing cycle. When the monthly allowance is used up, Copilot features pause until the next cycle unless an add-on pack is purchased.",
+    "token_count": 81,
+    "char_start": 0,
+    "char_end": 424,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Copilot Usage Limits"
+    },
+    "chunk_hash": "ed6ad65ab4ec8c3879d5a954ede0e05f52f36a2f7462d60886b4d9ce6650c6d0"
+  },
+  {
+    "chunk_id": "nx-pricing\u00a7starter",
+    "doc_id": "nx-pricing",
+    "section_id": "starter",
+    "section_title": "Starter Plan",
+    "text": "The Starter plan costs $49 per month and is designed for teams running occasional events. It includes 1 active event at a time, up to 250 attendees per event, ticketing with Stripe payments, the Check-in app and email support. The per-ticket platform fee on Starter is 2.5% of each paid ticket. Starter does not include virtual events, integrations or API access.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 363,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Starter Plan"
+    },
+    "chunk_hash": "ec35ee0e7f32f7c7a40f45880ede9f89ca882fb5ef18fc7da87a7a2880d2c2a2"
+  },
+  {
+    "chunk_id": "nx-pricing\u00a7growth",
+    "doc_id": "nx-pricing",
+    "section_id": "growth",
+    "section_title": "Growth Plan",
+    "text": "The Growth plan costs $199 per month and is the most popular plan. It includes 10 active events, up to 2,500 attendees per event, virtual and hybrid events, the analytics dashboard, the HubSpot, Slack and Zapier integrations and API access at 300 requests per minute. The per-ticket platform fee on Growth is 1.5%. Growth includes priority support with a 4-hour first-response target for urgent tickets.",
+    "token_count": 86,
+    "char_start": 0,
+    "char_end": 403,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Growth Plan"
+    },
+    "chunk_hash": "30266a8f3a0ce04e0e1ae060008ce82000d9f368e7e41d9509020e943a58d49a"
+  },
+  {
+    "chunk_id": "nx-pricing\u00a7enterprise",
+    "doc_id": "nx-pricing",
+    "section_id": "enterprise",
+    "section_title": "Enterprise Plan",
+    "text": "The Enterprise plan has custom pricing based on event volume and attendee numbers, with annual contracts starting at 50 events per year. It includes unlimited active events, events with 25,000 or more attendees, the Salesforce integration, SAML single sign-on, data residency controls, a dedicated customer success manager and API access at 1,200 requests per minute. Enterprise customers receive the full SLA with service credits and 24/7 support for Severity 1 incidents. Contact the Nexora sales team for a quote.",
+    "token_count": 97,
+    "char_start": 0,
+    "char_end": 516,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Enterprise Plan"
+    },
+    "chunk_hash": "d014588be6b4a29c6fc7d038394cd09b700e6656c0f4e5f3789947f51d487528"
+  },
+  {
+    "chunk_id": "nx-pricing\u00a7billing",
+    "doc_id": "nx-pricing",
+    "section_id": "billing",
+    "section_title": "Billing, Trials and Discounts",
+    "text": "Starter and Growth can be billed monthly or annually, and annual billing gives a 20% discount. Every new workspace starts with a 14-day free trial of the Growth plan with no credit card required. Nonprofit and education organizations receive a 30% discount on Starter and Growth after verification. Plans can be upgraded at any time with prorated billing, while downgrades take effect at the next renewal date.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 410,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Billing, Trials and Discounts"
+    },
+    "chunk_hash": "a946e44377567c7b5d84013e10d72af8764e9e9f7dd54df7f9dac8b6816456ad"
+  },
+  {
+    "chunk_id": "nx-pricing\u00a7add-ons",
+    "doc_id": "nx-pricing",
+    "section_id": "add-ons",
+    "section_title": "Add-ons",
+    "text": "Extra capacity can be purchased as add-ons: an additional 1,000 attendees per event costs $50 per month, and a Copilot pack of 500 extra requests costs $29 per month. Custom domains for event websites are included on Growth and Enterprise and cost $15 per month on Starter. Additional active events on Growth cost $20 per event per month. Add-ons are billed on the same cycle as the base plan.",
+    "token_count": 85,
+    "char_start": 0,
+    "char_end": 393,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Add-ons"
+    },
+    "chunk_hash": "2eb3012145c8d155a05671db22bde9b8c1c87ec19928ca0bdf0c1938af9116f0"
+  },
+  {
+    "chunk_id": "nx-onboarding\u00a7account-setup",
+    "doc_id": "nx-onboarding",
+    "section_id": "account-setup",
+    "section_title": "Account Setup",
+    "text": "Onboarding starts by creating a workspace at app.nexora.io, choosing the US or EU hosting region and verifying the admin email address. The hosting region cannot be changed later without a migration request to support. Next, connect a Stripe account under Settings > Payments so paid tickets can be sold. Finally, upload the organization logo and brand colours, which are applied to event pages and emails.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 406,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Account Setup"
+    },
+    "chunk_hash": "6bb5fa95265766a0c432fbd566ab5af510b51da34858e0e0c6737f480bb3ca11"
+  },
+  {
+    "chunk_id": "nx-onboarding\u00a7first-event",
+    "doc_id": "nx-onboarding",
+    "section_id": "first-event",
+    "section_title": "Creating Your First Event",
+    "text": "To create the first event, click New Event, enter the name, dates, time zone and venue or choose Virtual. Add at least one ticket type and set the registration questions you need, such as dietary requirements or company size. Preview the event page, then publish it to make registration live. Most teams publish their first event within one hour of signing up.",
+    "token_count": 72,
+    "char_start": 0,
+    "char_end": 360,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Creating Your First Event"
+    },
+    "chunk_hash": "b3272646cbb210edd6d581a318b360bd751979a2d8479a35795772074506fec7"
+  },
+  {
+    "chunk_id": "nx-onboarding\u00a7team-invites",
+    "doc_id": "nx-onboarding",
+    "section_id": "team-invites",
+    "section_title": "Inviting Your Team",
+    "text": "Workspace admins invite colleagues from Settings > Team and assign one of four roles: Admin, Organizer, Finance or Check-in Staff. Organizers manage events, Finance users see orders and payouts, and Check-in Staff can only use the Check-in app. Starter includes 3 team seats, Growth includes 10 and Enterprise includes unlimited seats. Enterprise workspaces can require SAML single sign-on for all team members.",
+    "token_count": 80,
+    "char_start": 0,
+    "char_end": 411,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Inviting Your Team"
+    },
+    "chunk_hash": "b3b80ac0a509c478f030d21cce3c5d46cc7dd26db90adb981fc41911930cde06"
+  },
+  {
+    "chunk_id": "nx-onboarding\u00a7data-import",
+    "doc_id": "nx-onboarding",
+    "section_id": "data-import",
+    "section_title": "Importing Existing Data",
+    "text": "Attendee lists from previous events can be imported from a CSV file with columns for first name, last name, email, company and tags. The importer checks for duplicate emails and merges them into existing attendee profiles. Up to 50,000 rows can be imported at once, and larger files should be split. Imports record the consent status of each contact so that marketing emails respect previous opt-outs.",
+    "token_count": 78,
+    "char_start": 0,
+    "char_end": 401,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Importing Existing Data"
+    },
+    "chunk_hash": "417a644c5513a92bb11a7d1dc300284dbd8059fd10ed3f9a13a66d67bc3dbab3"
+  },
+  {
+    "chunk_id": "nx-onboarding\u00a7go-live-checklist",
+    "doc_id": "nx-onboarding",
+    "section_id": "go-live-checklist",
+    "section_title": "Go-live Checklist",
+    "text": "Before an event goes live, confirm that Stripe payouts are verified, the refund policy is set, confirmation emails have been tested and the Check-in app is installed on every scanning device. Run a test purchase with a 100% discount code to see the attendee experience end to end. For virtual events, schedule a rehearsal in Nexora Stage at least 24 hours before the start. Enterprise customers can book a go-live review with their customer success manager.",
+    "token_count": 89,
+    "char_start": 0,
+    "char_end": 457,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Go-live Checklist"
+    },
+    "chunk_hash": "4ef159df41c774c964941e06acae453cdcd3a7cb7a87563eafd06515945c8fb2"
+  },
+  {
+    "chunk_id": "nx-api-overview\u00a7base-url",
+    "doc_id": "nx-api-overview",
+    "section_id": "base-url",
+    "section_title": "Base URL and Versioning",
+    "text": "The Nexora REST API is available at https://api.nexora.io/v2 for US workspaces and https://api.eu.nexora.io/v2 for EU workspaces. The current version is v2, and the version is part of every URL path. API v1 was deprecated in release v2.4 and will stop responding on 31 March 2026. All requests and responses use JSON, and all timestamps are ISO 8601 in UTC.",
+    "token_count": 89,
+    "char_start": 0,
+    "char_end": 357,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Base URL and Versioning"
+    },
+    "chunk_hash": "a9b312c9811ffa63370dd10524a4f28d4e23065770ae1af419b426ce567f6882"
+  },
+  {
+    "chunk_id": "nx-api-overview\u00a7pagination",
+    "doc_id": "nx-api-overview",
+    "section_id": "pagination",
+    "section_title": "Pagination",
+    "text": "List endpoints such as GET /v2/events and GET /v2/attendees return results in pages using cursor pagination. Each response includes a next_cursor field, which is passed as the cursor query parameter to fetch the following page. The page size is set with the limit parameter, from 1 to 200 items, with a default of 50. A null next_cursor means the last page has been reached.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 374,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Pagination"
+    },
+    "chunk_hash": "67070cd5700bcba1590a52b737ce2617ec0c9ac887ee2c51ce43ce1c7487228c"
+  },
+  {
+    "chunk_id": "nx-api-overview\u00a7errors",
+    "doc_id": "nx-api-overview",
+    "section_id": "errors",
+    "section_title": "Errors",
+    "text": "The API uses standard HTTP status codes: 400 for invalid requests, 401 for missing or invalid credentials, 403 for insufficient scopes, 404 for unknown resources, 409 for conflicts such as a duplicate ticket scan, and 429 when the rate limit is exceeded. Error responses contain an error object with a code, a human-readable message and a request_id. Include the request_id when contacting support about a failed call. Server errors return 500 or 503 and can be retried with exponential backoff.",
+    "token_count": 93,
+    "char_start": 0,
+    "char_end": 495,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Errors"
+    },
+    "chunk_hash": "1537c206fd2849732c4391a7083cd8d73ea4e8216d6052ede39d2397789615bd"
+  },
+  {
+    "chunk_id": "nx-api-overview\u00a7api-availability",
+    "doc_id": "nx-api-overview",
+    "section_id": "api-availability",
+    "section_title": "API Availability by Plan",
+    "text": "API access is included in the Growth and Enterprise plans and is not available on Starter. Growth workspaces can create up to 5 API keys and Enterprise workspaces up to 50. The sandbox environment at https://sandbox.api.nexora.io/v2 is available on every plan for testing without affecting live events. Sandbox data is reset every Sunday at 00:00 UTC.",
+    "token_count": 74,
+    "char_start": 0,
+    "char_end": 351,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "API Availability by Plan"
+    },
+    "chunk_hash": "6b587a83d2513c654c94043beb1487c3405d9dfcba9034db8bdcccafdd14daed"
+  },
+  {
+    "chunk_id": "nx-api-auth\u00a7api-keys",
+    "doc_id": "nx-api-auth",
+    "section_id": "api-keys",
+    "section_title": "API Keys",
+    "text": "Server-to-server calls authenticate with an API key sent in the Authorization header as Bearer followed by the key. Keys are created by workspace admins under Settings > API and are shown only once at creation, so they should be stored in a secrets manager. Each key has a name, a set of scopes and an optional expiry date. Keys that have not been used for 180 days are disabled automatically.",
+    "token_count": 80,
+    "char_start": 0,
+    "char_end": 393,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "API Keys"
+    },
+    "chunk_hash": "9395f3a1533a16dc2f8eea74272a66fe9e649f0cc1cdd2e0771d7e48c94cb5be"
+  },
+  {
+    "chunk_id": "nx-api-auth\u00a7oauth",
+    "doc_id": "nx-api-auth",
+    "section_id": "oauth",
+    "section_title": "OAuth 2.0",
+    "text": "Applications that act on behalf of other Nexora customers must use OAuth 2.0 with the authorization code flow. The authorization endpoint is https://auth.nexora.io/oauth/authorize and tokens are issued by https://auth.nexora.io/oauth/token. Access tokens expire after 1 hour and are renewed with a refresh token, which is valid for 60 days. OAuth apps must be registered in the Nexora developer portal to receive a client ID and client secret.",
+    "token_count": 97,
+    "char_start": 0,
+    "char_end": 443,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "OAuth 2.0"
+    },
+    "chunk_hash": "dc1cb62f96ed560f9f31dc8bbdacf40382e23252191dc2c845f214899ee88065"
+  },
+  {
+    "chunk_id": "nx-api-auth\u00a7scopes",
+    "doc_id": "nx-api-auth",
+    "section_id": "scopes",
+    "section_title": "Scopes",
+    "text": "Both API keys and OAuth tokens are limited by scopes. Available scopes include events:read, events:write, attendees:read, attendees:write, orders:read, orders:refund and webhooks:manage. A request that needs a scope the credential does not have fails with HTTP 403 and the error code insufficient_scope. Give each integration only the scopes it needs, for example attendees:read for a reporting tool.",
+    "token_count": 82,
+    "char_start": 0,
+    "char_end": 400,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Scopes"
+    },
+    "chunk_hash": "444e6e734c322c9da5d403253def10034caecc5f9b63b5915dcc17fec82dcffa"
+  },
+  {
+    "chunk_id": "nx-api-auth\u00a7key-rotation",
+    "doc_id": "nx-api-auth",
+    "section_id": "key-rotation",
+    "section_title": "Key Rotation and Revocation",
+    "text": "API keys should be rotated at least every 12 months, and Nexora sends a reminder email 30 days before a key's expiry date. To rotate without downtime, create a new key, deploy it, then revoke the old key under Settings > API. Revoked keys stop working within 60 seconds. If a key is exposed, revoke it immediately and review the audit log for calls made with it.",
+    "token_count": 78,
+    "char_start": 0,
+    "char_end": 362,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Key Rotation and Revocation"
+    },
+    "chunk_hash": "005c9dc30f539cc4e00039e3cad0466d51a305e11cdce3447109d5cef43c5bd1"
+  },
+  {
+    "chunk_id": "nx-api-rate-limits\u00a7limits-by-plan",
+    "doc_id": "nx-api-rate-limits",
+    "section_id": "limits-by-plan",
+    "section_title": "Limits by Plan",
+    "text": "The Nexora API enforces rate limits per workspace. Growth workspaces can make 300 requests per minute and Enterprise workspaces 1,200 requests per minute, shared across all API keys of the workspace. Short bursts of up to twice the per-minute limit are allowed for 10 seconds. The sandbox environment is limited to 60 requests per minute on every plan.",
+    "token_count": 67,
+    "char_start": 0,
+    "char_end": 352,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Limits by Plan"
+    },
+    "chunk_hash": "4579c39897cc424732212a9380b254891767ec99aafd566d104751052b7ea7a5"
+  },
+  {
+    "chunk_id": "nx-api-rate-limits\u00a7rate-limit-headers",
+    "doc_id": "nx-api-rate-limits",
+    "section_id": "rate-limit-headers",
+    "section_title": "Rate Limit Headers",
+    "text": "Every API response includes the headers X-RateLimit-Limit, X-RateLimit-Remaining and X-RateLimit-Reset. X-RateLimit-Remaining shows how many requests are left in the current one-minute window, and X-RateLimit-Reset gives the Unix time when the window resets. Clients should slow down when the remaining count gets close to zero. The headers are also present on 429 responses.",
+    "token_count": 80,
+    "char_start": 0,
+    "char_end": 375,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Rate Limit Headers"
+    },
+    "chunk_hash": "9bfcde08381d167be32901fa8f4e38ab1ab8e8b592e734a95f5b5bd000724a36"
+  },
+  {
+    "chunk_id": "nx-api-rate-limits\u00a7handling-429",
+    "doc_id": "nx-api-rate-limits",
+    "section_id": "handling-429",
+    "section_title": "Handling 429 Responses",
+    "text": "When the rate limit is exceeded the API returns HTTP 429 Too Many Requests with a Retry-After header in seconds. Clients should wait for the Retry-After period and then retry, using exponential backoff with jitter if repeated 429 responses occur. Requests that return 429 are not executed, so retrying them is safe. Repeated abuse of the limits can lead to a temporary block of the API key.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 390,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Handling 429 Responses"
+    },
+    "chunk_hash": "6392b07b63adcb7e2831f2c3a1e989b21ed2a95fa5a0d492fdf5c5c5491fdb2d"
+  },
+  {
+    "chunk_id": "nx-api-rate-limits\u00a7bulk-endpoints",
+    "doc_id": "nx-api-rate-limits",
+    "section_id": "bulk-endpoints",
+    "section_title": "Bulk Endpoints",
+    "text": "To stay within rate limits when syncing large lists, use the bulk endpoints. POST /v2/attendees/bulk creates or updates up to 500 attendees in one request and counts as a single request against the rate limit. Bulk requests are processed asynchronously and return a job_id, which can be polled with GET /v2/jobs/{job_id}. A webhook event job.completed is sent when the job finishes.",
+    "token_count": 81,
+    "char_start": 0,
+    "char_end": 382,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Bulk Endpoints"
+    },
+    "chunk_hash": "f2dcb58511caba2b269be2ffeb3446b9aca3830dbf73f6e030d57c4430434818"
+  },
+  {
+    "chunk_id": "nx-api-endpoints\u00a7events-endpoints",
+    "doc_id": "nx-api-endpoints",
+    "section_id": "events-endpoints",
+    "section_title": "Events",
+    "text": "GET /v2/events lists the events in the workspace and GET /v2/events/{event_id} returns one event with its dates, venue, status and ticket types. POST /v2/events creates a draft event and PATCH /v2/events/{event_id} updates it. An event's status moves from draft to published to completed, and only draft events can be deleted with DELETE /v2/events/{event_id}. Creating or changing events requires the events:write scope.",
+    "token_count": 99,
+    "char_start": 0,
+    "char_end": 421,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Events"
+    },
+    "chunk_hash": "2495de3d0e876bb06a501151ad7e735822e97dacd3a09bbcbb6025b73a11e92d"
+  },
+  {
+    "chunk_id": "nx-api-endpoints\u00a7attendees-endpoints",
+    "doc_id": "nx-api-endpoints",
+    "section_id": "attendees-endpoints",
+    "section_title": "Attendees",
+    "text": "GET /v2/events/{event_id}/attendees lists the attendees of an event with their ticket type, check-in status and engagement score. POST /v2/events/{event_id}/attendees registers an attendee without payment, which is useful for speakers and complimentary guests. PATCH /v2/attendees/{attendee_id} updates profile fields and tags. The check-in status can be set with POST /v2/attendees/{attendee_id}/check-in, which returns HTTP 409 if the attendee is already checked in.",
+    "token_count": 106,
+    "char_start": 0,
+    "char_end": 468,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Attendees"
+    },
+    "chunk_hash": "e007aec4b9b14867fc4cdd0cb0eba8156f916bf1fa2d2bd7d0986beeb9ceb1b3"
+  },
+  {
+    "chunk_id": "nx-api-endpoints\u00a7orders-endpoints",
+    "doc_id": "nx-api-endpoints",
+    "section_id": "orders-endpoints",
+    "section_title": "Orders and Tickets",
+    "text": "GET /v2/orders lists ticket orders with buyer details, line items, discounts applied and payment status. POST /v2/orders/{order_id}/refund refunds a full order or selected tickets and requires the orders:refund scope. Ticket inventory for a ticket type is available from GET /v2/ticket-types/{ticket_type_id}, including sold, reserved and remaining counts. Orders cannot be created through the API; buyers always purchase through the Nexora checkout.",
+    "token_count": 92,
+    "char_start": 0,
+    "char_end": 450,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Orders and Tickets"
+    },
+    "chunk_hash": "f09666b75513960364bb0797248ddb3c5c902a0d5997e295d95f49e8785e6363"
+  },
+  {
+    "chunk_id": "nx-api-endpoints\u00a7webhooks",
+    "doc_id": "nx-api-endpoints",
+    "section_id": "webhooks",
+    "section_title": "Webhooks",
+    "text": "Webhooks notify an HTTPS endpoint when something happens in the workspace, such as attendee.registered, attendee.checked_in, order.refunded or event.published. Webhook subscriptions are managed with the webhooks:manage scope or under Settings > Webhooks. Each delivery is signed with an HMAC-SHA256 signature in the Nexora-Signature header, which receivers should verify. Failed deliveries are retried 8 times over 24 hours with exponential backoff.",
+    "token_count": 81,
+    "char_start": 0,
+    "char_end": 449,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Webhooks"
+    },
+    "chunk_hash": "ad1ef716417ac8571f4ce14c411d4a78f202abf3fab29e49633db38a3c578a98"
+  },
+  {
+    "chunk_id": "nx-sla\u00a7uptime",
+    "doc_id": "nx-sla",
+    "section_id": "uptime",
+    "section_title": "Uptime Commitment",
+    "text": "Nexora commits to 99.9% monthly uptime for the web app, the Check-in app sync service, the event portal and the API on the Growth and Enterprise plans. Uptime is measured by external monitoring every minute from three regions, and the current status is published at status.nexora.io. Scheduled maintenance announced at least 72 hours in advance does not count as downtime. The Starter plan is provided without an uptime commitment.",
+    "token_count": 85,
+    "char_start": 0,
+    "char_end": 431,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Uptime Commitment"
+    },
+    "chunk_hash": "b9043b6fb97ddaa38bdba9cdadf854da45284eababa023c21998cbd738b098ba"
+  },
+  {
+    "chunk_id": "nx-sla\u00a7service-credits",
+    "doc_id": "nx-sla",
+    "section_id": "service-credits",
+    "section_title": "Service Credits",
+    "text": "If monthly uptime falls below 99.9%, Enterprise customers receive a service credit of 10% of that month's fee, rising to 25% below 99.0% and 50% below 95.0%. Growth customers receive half of these credit percentages. Credits must be requested within 30 days of the end of the affected month by contacting support. Service credits are the sole remedy for missed uptime and are applied to the next invoice.",
+    "token_count": 88,
+    "char_start": 0,
+    "char_end": 404,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Service Credits"
+    },
+    "chunk_hash": "639d41f115a6872607aaab767a37af8ea322ccd06b58d553a2b0553a4906cc23"
+  },
+  {
+    "chunk_id": "nx-sla\u00a7support-response",
+    "doc_id": "nx-sla",
+    "section_id": "support-response",
+    "section_title": "Support Response Times",
+    "text": "Support tickets are classified by severity. Severity 1 means an event is live and attendees cannot register, check in or join; Enterprise customers get a first response within 1 hour, 24/7, and Growth customers within 4 hours. Severity 2 issues, which degrade a feature without a workaround, have a 4-hour first-response SLA during business hours on Growth and Enterprise. Starter customers receive email support with a first response within 2 business days.",
+    "token_count": 88,
+    "char_start": 0,
+    "char_end": 458,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Support Response Times"
+    },
+    "chunk_hash": "72e924619f9163f892c2dff755a241632d7ab07c031ba264bb2e09eaaeed7a91"
+  },
+  {
+    "chunk_id": "nx-sla\u00a7maintenance-incidents",
+    "doc_id": "nx-sla",
+    "section_id": "maintenance-incidents",
+    "section_title": "Maintenance and Incident Communication",
+    "text": "Scheduled maintenance takes place on Sundays between 02:00 and 05:00 UTC and is avoided during events flagged as live in the workspace. During an incident, updates are posted to status.nexora.io at least every 30 minutes until resolution. A written post-incident report is shared with affected Enterprise customers within 5 business days for any Severity 1 incident. Customers can subscribe to status updates by email, SMS or Slack.",
+    "token_count": 83,
+    "char_start": 0,
+    "char_end": 432,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Maintenance and Incident Communication"
+    },
+    "chunk_hash": "0dda3eeef4e5ce2311755e7c461f6c2b65621082c42af57c300d77d268329ae2"
+  },
+  {
+    "chunk_id": "nx-security\u00a7soc2",
+    "doc_id": "nx-security",
+    "section_id": "soc2",
+    "section_title": "SOC 2 Type II",
+    "text": "Nexora holds a SOC 2 Type II report covering the security, availability and confidentiality trust service criteria. The audit is performed annually by an independent CPA firm, and the most recent report covers the twelve months to 30 June 2025. Customers can request the report under NDA from the Nexora Trust Center. Nexora is also working toward ISO 27001 certification, expected in 2026.",
+    "token_count": 70,
+    "char_start": 0,
+    "char_end": 390,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "SOC 2 Type II"
+    },
+    "chunk_hash": "1ced850c5f824b0c3276f03f2e6513c598fd5ab0c99685696e7d82c389cbc6b6"
+  },
+  {
+    "chunk_id": "nx-security\u00a7encryption",
+    "doc_id": "nx-security",
+    "section_id": "encryption",
+    "section_title": "Encryption",
+    "text": "All data is encrypted in transit with TLS 1.2 or higher and at rest with AES-256. Payment card data never touches Nexora servers because payments are processed by Stripe, which keeps Nexora out of PCI DSS scope for card storage. Encryption keys are managed in the cloud provider's key management service and rotated every year. Backups are encrypted with the same standards and stored in the same region as the workspace.",
+    "token_count": 82,
+    "char_start": 0,
+    "char_end": 421,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Encryption"
+    },
+    "chunk_hash": "33e4749af136ce983ca047bd3be1dcb11e98e9ea7a495b29d6016ed7a4197c34"
+  },
+  {
+    "chunk_id": "nx-security\u00a7access-control",
+    "doc_id": "nx-security",
+    "section_id": "access-control",
+    "section_title": "Access Control and SSO",
+    "text": "Workspace roles limit what each team member can see, and every sign-in can require two-factor authentication. Enterprise workspaces can enforce single sign-on with SAML 2.0 through identity providers such as Okta, Microsoft Entra ID and Google Workspace, and can provision users with SCIM. Nexora employees can access customer data only through a just-in-time approval process, and every access is logged. The audit log in Settings > Security records sign-ins, exports and permission changes for 1 year.",
+    "token_count": 99,
+    "char_start": 0,
+    "char_end": 503,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Access Control and SSO"
+    },
+    "chunk_hash": "78137d2f06279701b8696006b2613f8b74c3db68322ca8745ae979025c8ec0cb"
+  },
+  {
+    "chunk_id": "nx-security\u00a7testing-disclosure",
+    "doc_id": "nx-security",
+    "section_id": "testing-disclosure",
+    "section_title": "Penetration Testing and Disclosure",
+    "text": "An external firm performs a penetration test of the web app, the mobile apps and the API every year, and critical findings are fixed within 7 days. Nexora runs a responsible disclosure program and accepts security reports at security@nexora.io. Researchers who follow the program's rules are not pursued legally. A summary of the latest penetration test is available in the Trust Center.",
+    "token_count": 74,
+    "char_start": 0,
+    "char_end": 387,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Penetration Testing and Disclosure"
+    },
+    "chunk_hash": "9eadbe0c4f33f179ee065a9d4b8c04cd520bb3b2e61a42c499e43e1755c27314"
+  },
+  {
+    "chunk_id": "nx-privacy-gdpr\u00a7gdpr-role",
+    "doc_id": "nx-privacy-gdpr",
+    "section_id": "gdpr-role",
+    "section_title": "GDPR Roles and DPA",
+    "text": "Under the GDPR, the event organizer is the data controller for attendee data and Nexora acts as the data processor. Nexora's Data Processing Agreement is part of the terms of service for every plan and includes the EU Standard Contractual Clauses for transfers outside the EU. A list of sub-processors, such as Stripe and the cloud hosting provider, is published in the Trust Center with 30 days' notice before changes. Nexora's Data Protection Officer can be reached at privacy@nexora.io.",
+    "token_count": 97,
+    "char_start": 0,
+    "char_end": 489,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "GDPR Roles and DPA"
+    },
+    "chunk_hash": "9dbe3107c69d6f9ef3846aedd59e769896162b3898b15d0bf72f9d9fd49f804d"
+  },
+  {
+    "chunk_id": "nx-privacy-gdpr\u00a7data-residency",
+    "doc_id": "nx-privacy-gdpr",
+    "section_id": "data-residency",
+    "section_title": "Data Residency",
+    "text": "Workspaces are hosted in the US region (Virginia) or the EU region (Frankfurt), and attendee data stays in the chosen region, including backups. Enterprise customers can additionally restrict support access to staff located in the EU. The region is selected when the workspace is created and applies to all events in it. Moving an existing workspace to another region requires a migration performed by Nexora support.",
+    "token_count": 76,
+    "char_start": 0,
+    "char_end": 417,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Data Residency"
+    },
+    "chunk_hash": "ebf54039015c239fc2770ff74e63fa6c7e69b94c16326fd133d74fcd164553a3"
+  },
+  {
+    "chunk_id": "nx-privacy-gdpr\u00a7data-retention",
+    "doc_id": "nx-privacy-gdpr",
+    "section_id": "data-retention",
+    "section_title": "Data Retention",
+    "text": "Attendee personal data is retained for 90 days after an event ends and is then deleted or anonymized automatically, unless the organizer has chosen a shorter period. Aggregated, anonymized statistics are kept for reporting. Enterprise customers can set a custom retention period between 30 and 730 days per event. Order and invoice records are kept for 7 years to meet tax obligations.",
+    "token_count": 68,
+    "char_start": 0,
+    "char_end": 385,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Data Retention"
+    },
+    "chunk_hash": "e6a88ef0f9a25356c640e24933caa0465417ced9c11722347311c7764b0b507c"
+  },
+  {
+    "chunk_id": "nx-privacy-gdpr\u00a7subject-requests",
+    "doc_id": "nx-privacy-gdpr",
+    "section_id": "subject-requests",
+    "section_title": "Data Subject Requests",
+    "text": "Organizers handle access, correction and deletion requests from attendees in the attendee profile, where a Delete Profile action removes personal data from all events in the workspace. Deletions are completed within 30 days and removed from backups within 35 days. Attendees can also unsubscribe from marketing emails through the link in every email. Nexora forwards any request it receives directly to the relevant organizer within 5 business days.",
+    "token_count": 74,
+    "char_start": 0,
+    "char_end": 449,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Data Subject Requests"
+    },
+    "chunk_hash": "199246b589cf2e458073e4a3c84d9e36b3dce6fb53d67d3b3471a93eb424d6cf"
+  },
+  {
+    "chunk_id": "nx-company\u00a7history",
+    "doc_id": "nx-company",
+    "section_id": "history",
+    "section_title": "Company History",
+    "text": "Nexora was founded in 2019 in Austin, Texas, by Maya Lindqvist and Arjun Mehta, who previously ran events for a developer conference. The first version of the platform focused on ticketing and on-site check-in for technology conferences. Virtual events were added in 2020, and Nexora Copilot, the AI assistant, launched in 2025. The company's mission is to make every event measurable.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 385,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Company History"
+    },
+    "chunk_hash": "0b6742328a55fba532c6be39fa6104f2881f294488b80aa909ad9d5849f3a8f2"
+  },
+  {
+    "chunk_id": "nx-company\u00a7leadership",
+    "doc_id": "nx-company",
+    "section_id": "leadership",
+    "section_title": "Leadership",
+    "text": "Maya Lindqvist is the Chief Executive Officer and Arjun Mehta is the Chief Technology Officer. Daniel Okafor leads customer success as Chief Customer Officer, and Priya Raman is the Chief Financial Officer. The leadership team reports to a board of directors that includes investors from the Series B round. Nexora publishes a quarterly product update from the leadership team on its blog.",
+    "token_count": 67,
+    "char_start": 0,
+    "char_end": 389,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Leadership"
+    },
+    "chunk_hash": "ac32e74d6bf388344c7b0d14320970f0bc4628bbd40925e364e5372ddf85e9ab"
+  },
+  {
+    "chunk_id": "nx-company\u00a7team-offices",
+    "doc_id": "nx-company",
+    "section_id": "team-offices",
+    "section_title": "Team and Offices",
+    "text": "Nexora has about 180 employees working from offices in Austin, Dublin and Singapore and remotely across 14 countries. The Dublin office hosts the EU support team and the data protection function. Customer support operates in three shifts so that Severity 1 incidents are covered 24/7 for Enterprise customers. Engineering is split into product teams for ticketing, virtual events, analytics, integrations and Copilot.",
+    "token_count": 72,
+    "char_start": 0,
+    "char_end": 417,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Team and Offices"
+    },
+    "chunk_hash": "feb5b34f5b078655993c4e63de010d5e5a80b805a6a12c245190aca1f8176e9d"
+  },
+  {
+    "chunk_id": "nx-company\u00a7funding",
+    "doc_id": "nx-company",
+    "section_id": "funding",
+    "section_title": "Funding and Customers",
+    "text": "Nexora raised a $42 million Series B in 2023, led by Harborline Ventures, after a $12 million Series A in 2021. More than 1,400 organizations use Nexora, including software companies, universities, medical associations and event agencies. In 2024 the platform processed more than 3 million registrations and $180 million in ticket sales. Nexora has been profitable on an operating basis since the fourth quarter of 2024.",
+    "token_count": 80,
+    "char_start": 0,
+    "char_end": 420,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Funding and Customers"
+    },
+    "chunk_hash": "0d53678044234d261c84a1b50301acc0d4ac185139a28fe49dc73c47130f3b5d"
+  },
+  {
+    "chunk_id": "nx-release-2-3\u00a7highlights",
+    "doc_id": "nx-release-2-3",
+    "section_id": "highlights",
+    "section_title": "v2.3 Highlights",
+    "text": "Nexora v2.3 was released on 4 March 2025. It introduced ticket waitlists, which offer released tickets to people in the order they joined, and the AI agenda builder in beta for Growth and Enterprise workspaces. The Check-in app gained offline mode, so scans work without an internet connection and sync later. v2.3 also added Apple Wallet and Google Wallet passes for tickets.",
+    "token_count": 75,
+    "char_start": 0,
+    "char_end": 376,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.3 Highlights"
+    },
+    "chunk_hash": "7102d39b0e20012aedca48cc3544ac9c0600c61e3834cc04788b293c3a49e964"
+  },
+  {
+    "chunk_id": "nx-release-2-3\u00a7improvements",
+    "doc_id": "nx-release-2-3",
+    "section_id": "improvements",
+    "section_title": "v2.3 Improvements",
+    "text": "Registration pages in v2.3 load 40% faster thanks to a new page renderer. Discount codes can now be limited to a maximum number of uses per buyer. The attendee list supports saved filters, and CSV exports include custom registration answers as separate columns. Organizers can duplicate an event together with its ticket types, sessions and email templates.",
+    "token_count": 66,
+    "char_start": 0,
+    "char_end": 357,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.3 Improvements"
+    },
+    "chunk_hash": "8f4a2c44343488ec2762bb73ad440cf611dfe852ecbe53df7ce54312ec81930f"
+  },
+  {
+    "chunk_id": "nx-release-2-3\u00a7fixes",
+    "doc_id": "nx-release-2-3",
+    "section_id": "fixes",
+    "section_title": "v2.3 Fixes and Deprecations",
+    "text": "v2.3 fixed an issue where confirmation emails were sent twice when a buyer refreshed the checkout page. Time zones in calendar invitations now follow the event's time zone instead of the buyer's browser. The legacy embed widget for ticket sales was deprecated in v2.3 and replaced by the new checkout embed. Support for Internet Explorer 11 ended with this release.",
+    "token_count": 72,
+    "char_start": 0,
+    "char_end": 365,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.3 Fixes and Deprecations"
+    },
+    "chunk_hash": "c7a8cd771d0aa0058e0f3c27c4375e79c09f8268680a0b6d92f2cc4f1b5d72ad"
+  },
+  {
+    "chunk_id": "nx-release-2-4\u00a7highlights",
+    "doc_id": "nx-release-2-4",
+    "section_id": "highlights",
+    "section_title": "v2.4 Highlights",
+    "text": "Nexora v2.4 was released on 17 June 2025. Hybrid events became generally available, letting in-person and virtual attendees share one agenda, Q&A and reporting. The Slack integration launched with alerts for check-in thresholds and daily registration digests. The AI agenda builder moved from beta to general availability.",
+    "token_count": 61,
+    "char_start": 0,
+    "char_end": 322,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.4 Highlights"
+    },
+    "chunk_hash": "ff85ae2f58e753d1465cff93230cdf65deba793dfff5f882a7d4c039910210ba"
+  },
+  {
+    "chunk_id": "nx-release-2-4\u00a7improvements",
+    "doc_id": "nx-release-2-4",
+    "section_id": "improvements",
+    "section_title": "v2.4 Improvements",
+    "text": "Real-time metrics in the analytics dashboard were rebuilt in v2.4 to handle events with up to 25,000 concurrent attendees. Badge printing added support for Brother label printers alongside Zebra. Webhook deliveries now include a Nexora-Signature header signed with HMAC-SHA256. The API added the bulk attendee endpoint POST /v2/attendees/bulk for up to 500 records per request.",
+    "token_count": 74,
+    "char_start": 0,
+    "char_end": 377,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.4 Improvements"
+    },
+    "chunk_hash": "6c43952c5263780c5a70cb261e8105929b610edad66dfd4faa9b3a81ab3e324e"
+  },
+  {
+    "chunk_id": "nx-release-2-4\u00a7fixes",
+    "doc_id": "nx-release-2-4",
+    "section_id": "fixes",
+    "section_title": "v2.4 Fixes and Deprecations",
+    "text": "v2.4 fixed session capacity counts that could exceed the room limit when two scans happened at the same second. API v1 was deprecated in v2.4 and will stop responding on 31 March 2026, so integrations must move to the v2 endpoints. The old Zapier app version 1.x was retired in favour of Zapier app 2.0. Exported CSV files now use UTF-8 with a byte order mark so that Excel opens accented names correctly.",
+    "token_count": 88,
+    "char_start": 0,
+    "char_end": 405,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.4 Fixes and Deprecations"
+    },
+    "chunk_hash": "11c9c25dbfe21f80474d5c15577c43c09bcaca1e6a2fce9b9f92de5672a26815"
+  },
+  {
+    "chunk_id": "nx-release-2-5\u00a7highlights",
+    "doc_id": "nx-release-2-5",
+    "section_id": "highlights",
+    "section_title": "v2.5 Highlights",
+    "text": "Nexora v2.5 was released on 23 September 2025. It introduced smart matchmaking, which recommends people for each attendee to meet, and AI session summaries generated from recorded sessions. Enterprise customers gained a data warehouse export that streams event data to Snowflake or BigQuery. Automatic captions in 12 languages are now added to recordings.",
+    "token_count": 61,
+    "char_start": 0,
+    "char_end": 355,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.5 Highlights"
+    },
+    "chunk_hash": "783a086b49fb59753b2596db3efb9de6b1ceba658ea9b5c4184547e201133956"
+  },
+  {
+    "chunk_id": "nx-release-2-5\u00a7improvements",
+    "doc_id": "nx-release-2-5",
+    "section_id": "improvements",
+    "section_title": "v2.5 Improvements",
+    "text": "The HubSpot integration in v2.5 syncs the engagement score as a contact property and creates timeline events for session attendance. Salesforce campaign member statuses now update in near real time instead of every hour. The meeting scheduler supports 15-minute slots in addition to 30-minute slots. Copilot usage is shown on the Billing page with a per-feature breakdown.",
+    "token_count": 69,
+    "char_start": 0,
+    "char_end": 372,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.5 Improvements"
+    },
+    "chunk_hash": "a1f34a5a58f7073ac5fe179e49b79caed32c68b9e60ffb7aa959f80a40921b1f"
+  },
+  {
+    "chunk_id": "nx-release-2-5\u00a7fixes",
+    "doc_id": "nx-release-2-5",
+    "section_id": "fixes",
+    "section_title": "v2.5 Fixes and Known Issues",
+    "text": "v2.5 fixed duplicate attendee profiles created when the same email was entered with different capitalisation. Refunds of group orders now return every ticket in the group to inventory. A known issue in v2.5 delays AI session summaries for recordings longer than 3 hours; a fix is planned for v2.5.1. The minimum supported version of the Check-in app is now 5.0.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 361,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "v2.5 Fixes and Known Issues"
+    },
+    "chunk_hash": "78a3aff8c567393e86819e9002ef12f98b654126d1a587d0a8816e17f11a1067"
+  },
+  {
+    "chunk_id": "nx-support-faq\u00a7faq-account",
+    "doc_id": "nx-support-faq",
+    "section_id": "faq-account",
+    "section_title": "FAQ: Account and Billing",
+    "text": "Q1: How do I change my plan? Go to Settings > Billing and choose Upgrade or Downgrade; upgrades apply immediately with prorated billing. Q2: Can I get an invoice with our VAT number? Yes, add the VAT number under Settings > Billing and every future invoice will show it. Q3: What happens when my free trial ends? The workspace switches to read-only after the 14-day trial until a plan is selected, and no data is deleted.",
+    "token_count": 92,
+    "char_start": 0,
+    "char_end": 421,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "FAQ: Account and Billing"
+    },
+    "chunk_hash": "368635b71868c4abb78adda9a629092ffc1376eb980d96c48ebb1cb2a8217d23"
+  },
+  {
+    "chunk_id": "nx-support-faq\u00a7faq-tickets",
+    "doc_id": "nx-support-faq",
+    "section_id": "faq-tickets",
+    "section_title": "FAQ: Tickets and Payments",
+    "text": "Q4: When do I receive ticket revenue? Stripe pays ticket revenue to the organizer's bank account on a rolling 2-day schedule, minus Stripe fees and the Nexora platform fee. Q5: Can attendees pay by invoice? Yes, Growth and Enterprise events can offer pay-by-invoice for orders above $500, and unpaid invoices release the tickets after 30 days. Q6: Why was an attendee charged twice? This is almost always two separate orders; search both order numbers and refund the duplicate from the order page.",
+    "token_count": 104,
+    "char_start": 0,
+    "char_end": 497,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "FAQ: Tickets and Payments"
+    },
+    "chunk_hash": "dce72944147c7885a49108bbf0f95505a71d81af655430480ad7843f96a67f55"
+  },
+  {
+    "chunk_id": "nx-support-faq\u00a7faq-checkin",
+    "doc_id": "nx-support-faq",
+    "section_id": "faq-checkin",
+    "section_title": "FAQ: Check-in and Badges",
+    "text": "Q7: Does check-in work without Wi-Fi? Yes, the Check-in app works offline and syncs scans once the connection returns. Q8: Which badge printers are supported? Zebra ZD-series and Brother QL-series label printers are supported over Bluetooth or USB. Q9: Can an attendee check in on two devices at once? No, the first scan wins and later scans show an already-checked-in warning after the devices sync.",
+    "token_count": 90,
+    "char_start": 0,
+    "char_end": 400,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "FAQ: Check-in and Badges"
+    },
+    "chunk_hash": "d75ad335cd43bbc1862879d2c42b58d238c562971e1ac8cebab25831ed4474c4"
+  },
+  {
+    "chunk_id": "nx-support-faq\u00a7faq-virtual",
+    "doc_id": "nx-support-faq",
+    "section_id": "faq-virtual",
+    "section_title": "FAQ: Virtual Events",
+    "text": "Q10: How many people can watch a live stream? Nexora Stage supports up to 25,000 concurrent viewers per event on Enterprise and 2,500 on Growth. Q11: Can I stream from Zoom or OBS? You can stream from OBS or any encoder that supports RTMP, and Zoom meetings can be streamed through Zoom's custom live streaming option. Q12: How long are recordings kept? Recordings are stored for 12 months and can be downloaded as MP4 files.",
+    "token_count": 91,
+    "char_start": 0,
+    "char_end": 425,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "FAQ: Virtual Events"
+    },
+    "chunk_hash": "62be26b6aadc6209ba314f6a68f8b78781fe7bc84f299267efa0fc9d874e0e17"
+  },
+  {
+    "chunk_id": "nx-support-faq\u00a7faq-data",
+    "doc_id": "nx-support-faq",
+    "section_id": "faq-data",
+    "section_title": "FAQ: Data and Integrations",
+    "text": "Q13: How long do you keep attendee data? Attendee personal data is kept for 90 days after the event ends, then deleted or anonymized. Q14: Which CRMs do you integrate with? Nexora integrates natively with Salesforce (Enterprise) and HubSpot (Growth and Enterprise), and with other tools through Zapier. Q15: Why is my integration not syncing? Check that the connected user still has access in the other system, then use Reconnect under Settings > Integrations; most sync errors come from expired credentials.",
+    "token_count": 98,
+    "char_start": 0,
+    "char_end": 508,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "FAQ: Data and Integrations"
+    },
+    "chunk_hash": "eea707b82fae7b53dea15897b9f4f2817083fb3514c7ef513372d031cbede56f"
+  },
+  {
+    "chunk_id": "nx-integration-salesforce\u00a7overview",
+    "doc_id": "nx-integration-salesforce",
+    "section_id": "overview",
+    "section_title": "Salesforce Integration Overview",
+    "text": "The Salesforce integration is available on the Enterprise plan and syncs attendees to Salesforce as leads or contacts. Each Nexora event can be linked to a Salesforce campaign, and attendees become campaign members with statuses such as Registered, Attended and No Show. Engagement scores and session attendance are written to custom fields on the lead or contact. The integration is installed from the Salesforce AppExchange package Nexora Connect.",
+    "token_count": 74,
+    "char_start": 0,
+    "char_end": 449,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Salesforce Integration Overview"
+    },
+    "chunk_hash": "2df073a581cbe377f7278c6d2c989561ab4958eca961cbb5d24fe7f293972953"
+  },
+  {
+    "chunk_id": "nx-integration-salesforce\u00a7setup",
+    "doc_id": "nx-integration-salesforce",
+    "section_id": "setup",
+    "section_title": "Salesforce Setup",
+    "text": "To connect Salesforce, a Salesforce administrator installs Nexora Connect, then a Nexora admin opens Settings > Integrations > Salesforce and signs in with OAuth. The connecting Salesforce user needs the API Enabled permission and edit access to leads, contacts and campaigns. After connecting, map Nexora registration questions to Salesforce fields and choose whether new attendees become leads or are matched to existing contacts by email. A test sync of 10 records is recommended before enabling full sync.",
+    "token_count": 85,
+    "char_start": 0,
+    "char_end": 509,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Salesforce Setup"
+    },
+    "chunk_hash": "c5e652d0469914de07eeae4f8a01dd2e4477d1519bb7c347d68ce5846384d633"
+  },
+  {
+    "chunk_id": "nx-integration-salesforce\u00a7sync-behavior",
+    "doc_id": "nx-integration-salesforce",
+    "section_id": "sync-behavior",
+    "section_title": "Salesforce Sync Behavior",
+    "text": "New registrations and status changes sync to Salesforce in near real time, typically within 2 minutes. Existing contacts are matched by email address to avoid duplicates, and Nexora never deletes records in Salesforce. If a sync fails, the error is shown in the integration log with the Salesforce error message, and failed records are retried every 15 minutes for 24 hours. Salesforce API calls made by the integration count against the customer's Salesforce daily API limit.",
+    "token_count": 86,
+    "char_start": 0,
+    "char_end": 476,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Salesforce Sync Behavior"
+    },
+    "chunk_hash": "8e7f6d746eb4b3bd51c21ed783f81863be754f84dd16b4800f9becf5e5ad6f3c"
+  },
+  {
+    "chunk_id": "nx-integration-hubspot\u00a7overview",
+    "doc_id": "nx-integration-hubspot",
+    "section_id": "overview",
+    "section_title": "HubSpot Integration Overview",
+    "text": "The HubSpot integration is available on the Growth and Enterprise plans and syncs attendees to HubSpot as contacts. Registrations, check-ins and session attendance appear as timeline events on each contact, and the engagement score is stored as a contact property. Attendees can be added to HubSpot static lists per event, which makes follow-up campaigns easy. Marketing consent collected at registration is synced to HubSpot's subscription types.",
+    "token_count": 79,
+    "char_start": 0,
+    "char_end": 447,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "HubSpot Integration Overview"
+    },
+    "chunk_hash": "ca49e1dc8a17f8b6681292079eafcf88b64b681d604fef39394bf0c023de4bf3"
+  },
+  {
+    "chunk_id": "nx-integration-hubspot\u00a7setup",
+    "doc_id": "nx-integration-hubspot",
+    "section_id": "setup",
+    "section_title": "HubSpot Setup",
+    "text": "Connect HubSpot from Settings > Integrations > HubSpot by signing in with a HubSpot super admin or a user with contact and list permissions. Choose which Nexora events should sync and which HubSpot list each event should use. Registration questions are mapped to HubSpot contact properties, and missing properties can be created during setup. The initial sync imports all existing attendees of the selected events.",
+    "token_count": 70,
+    "char_start": 0,
+    "char_end": 414,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "HubSpot Setup"
+    },
+    "chunk_hash": "c3eb3f949c0c2ffc097d888099a18264c4f36a1c87695f80df5b90623a03d49c"
+  },
+  {
+    "chunk_id": "nx-integration-hubspot\u00a7sync-behavior",
+    "doc_id": "nx-integration-hubspot",
+    "section_id": "sync-behavior",
+    "section_title": "HubSpot Sync Behavior",
+    "text": "Contacts are matched by email address, and existing HubSpot contacts are updated rather than duplicated. Changes sync within 5 minutes, and a manual Resync button is available on each event. If HubSpot rejects a record, for example because of an invalid email, the error appears in the integration log and the record is skipped. Unsubscribes made in HubSpot are respected by Nexora's marketing emails.",
+    "token_count": 74,
+    "char_start": 0,
+    "char_end": 401,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "HubSpot Sync Behavior"
+    },
+    "chunk_hash": "d5f041f1ff618d3bba6cda0c5fd4256a544283f61e2349dba866b90b8f0f66b6"
+  },
+  {
+    "chunk_id": "nx-integration-zapier\u00a7overview",
+    "doc_id": "nx-integration-zapier",
+    "section_id": "overview",
+    "section_title": "Zapier Integration Overview",
+    "text": "The Nexora Zapier app connects Nexora with more than 6,000 apps without code and is available on the Growth and Enterprise plans. Zapier app 2.0 is the current version; version 1.x was retired in release v2.4. Common zaps add new attendees to a Google Sheet, create Mailchimp subscribers or post new orders to Microsoft Teams. The Zapier app uses the Nexora API, so its calls count toward the workspace rate limit.",
+    "token_count": 86,
+    "char_start": 0,
+    "char_end": 414,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Zapier Integration Overview"
+    },
+    "chunk_hash": "3cb943ab8c6bd5ecbf2a2407dbe8fb56d3c4125a58bcb5c2e1bc0a0350ed6110"
+  },
+  {
+    "chunk_id": "nx-integration-zapier\u00a7triggers-actions",
+    "doc_id": "nx-integration-zapier",
+    "section_id": "triggers-actions",
+    "section_title": "Zapier Triggers and Actions",
+    "text": "Available triggers are New Attendee, Attendee Checked In, New Order, Order Refunded and Event Published. Available actions are Create Attendee, Update Attendee Tags and Find Attendee by Email. Triggers are delivered instantly through Nexora webhooks rather than polling. Each trigger can be filtered to a single event so that one zap does not fire for every event in the workspace.",
+    "token_count": 68,
+    "char_start": 0,
+    "char_end": 381,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Zapier Triggers and Actions"
+    },
+    "chunk_hash": "72cfbb41267f46f5d800009a19295ac82993bf46694e342311a92b4f9b84ffb7"
+  },
+  {
+    "chunk_id": "nx-integration-zapier\u00a7troubleshooting",
+    "doc_id": "nx-integration-zapier",
+    "section_id": "troubleshooting",
+    "section_title": "Zapier Troubleshooting",
+    "text": "If a zap stops running, reconnect the Nexora account in Zapier with a new API key that has the needed scopes, such as attendees:read for the New Attendee trigger. Zaps built on the retired version 1.x must be rebuilt on Zapier app 2.0. When a zap hits the Nexora rate limit, Zapier retries automatically after the Retry-After period. The Zapier task history shows the exact Nexora response for each run.",
+    "token_count": 85,
+    "char_start": 0,
+    "char_end": 403,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Zapier Troubleshooting"
+    },
+    "chunk_hash": "1c26f74fdf53af94f28ec493804a96f4a6ee4e62f9480966f035361c0c355b95"
+  },
+  {
+    "chunk_id": "nx-integration-slack\u00a7overview",
+    "doc_id": "nx-integration-slack",
+    "section_id": "overview",
+    "section_title": "Slack Integration Overview",
+    "text": "The Slack integration posts event updates to Slack channels and is available on the Growth and Enterprise plans. It launched in release v2.4. Teams use it for daily registration digests, alerts when check-ins pass a threshold, and notifications when a session reaches 90% of capacity. Each event can post to a different Slack channel.",
+    "token_count": 65,
+    "char_start": 0,
+    "char_end": 334,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Slack Integration Overview"
+    },
+    "chunk_hash": "7954059007f2ac03cd85747f55922f772899a7f287eca88caafac4c19ef5d860"
+  },
+  {
+    "chunk_id": "nx-integration-slack\u00a7setup",
+    "doc_id": "nx-integration-slack",
+    "section_id": "setup",
+    "section_title": "Slack Setup",
+    "text": "Install the Nexora app from Settings > Integrations > Slack and approve it in the Slack workspace. Then choose a channel for each event and select which notifications to send. Private channels require inviting the Nexora app to the channel first with the /invite @Nexora command. The integration only posts messages and cannot read channel history.",
+    "token_count": 62,
+    "char_start": 0,
+    "char_end": 348,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Slack Setup"
+    },
+    "chunk_hash": "4b8fc8616eb60d6bb2129401c4095823b01e43e8695d5e1b235de03d54aa7bcd"
+  },
+  {
+    "chunk_id": "nx-integration-slack\u00a7notifications",
+    "doc_id": "nx-integration-slack",
+    "section_id": "notifications",
+    "section_title": "Slack Notifications",
+    "text": "The daily digest is posted at 09:00 in the event's time zone and lists new registrations, revenue and remaining capacity. Threshold alerts fire when check-ins or registrations cross a number set by the organizer, such as 500 check-ins. Incident notices from status.nexora.io can also be posted to a Slack channel. Notifications never include attendee email addresses or payment details.",
+    "token_count": 77,
+    "char_start": 0,
+    "char_end": 386,
+    "chunk_index": 0,
+    "metadata": {
+      "section_title": "Slack Notifications"
+    },
+    "chunk_hash": "f1aa6e2c6e2d48e9cb8a1d7882bd37b6572fdabecf4f2c462235c9ab5cf9cc4a"
   }
 ]

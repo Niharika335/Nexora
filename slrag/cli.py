@@ -138,5 +138,110 @@ def probe_command(index: str):
     click.echo("Probe completed: System healthy.")
 
 
+@cli.command("replay")
+@click.argument("scenarios_path", type=click.Path())
+@click.option("--mode", type=click.Choice(["ours", "b0", "b1"], case_sensitive=False), default="ours", help="Execution mode.")
+@click.option("--out", default="out/telemetry.jsonl", help="Telemetry output JSONL path (summary.json is written next to it).")
+@click.option("--speed", type=float, default=0.0, help="Wall-clock pacing: 1 = real time, 0 = as fast as possible. Metrics use virtual time either way.")
+@click.option("--split", type=click.Choice(["test", "tune"]), default="test", help="Split to load when SCENARIOS_PATH is a directory.")
+@click.option("--category", default=None, help="Only replay scenarios of this category (e.g. late_detail, compound).")
+@click.option("--speculation", type=click.Choice(["off", "retrieval_only", "full"]), default=None,
+              help="Override speculation.mode (A3 arm) for this replay.")
+@click.option("--experiment", type=click.Choice(["A3"], case_sensitive=False), default=None,
+              help="A3: replay the scenarios under all three speculation arms and write a3.json next to --out.")
+@click.option("--trace-out", default=None, help="Also write one trace JSONL per scenario to this directory (<mode>_<scenario>.jsonl).")
+@click.option("--dry-run", is_flag=True, help="Validate inputs and build the engine without replaying.")
+def replay_command(scenarios_path: str, mode: str, out: str, speed: float, split: str, category: str, speculation: str,
+                   experiment: str, trace_out: str, dry_run: bool):
+    """Replay scenarios through the engine.
+
+    SCENARIOS_PATH is a JSONL file, a scenario directory (loads <split>.jsonl and
+    late_<split>.jsonl) or <dir>/test | <dir>/tune."""
+    from slrag.eval.runner import ReplayRunner, resolve_scenario_files
+
+    files = resolve_scenario_files(scenarios_path, split)
+    if not files or not all(f.exists() for f in files):
+        raise click.BadParameter(f"no scenario files found for '{scenarios_path}'", param_hint="SCENARIOS_PATH")
+    if Path(scenarios_path).name in ("test", "tune") and not Path(scenarios_path).exists():
+        split = Path(scenarios_path).name
+    overrides = {"speculation.mode": speculation} if speculation else {}
+    runner = ReplayRunner(scenarios_path=scenarios_path, mode=mode, out_path=out, speed=speed, split=split, category=category,
+                          config_overrides=overrides, trace_out=trace_out)
+    if experiment and experiment.upper() == "A3":
+        out_dir = Path(out).parent
+        result = runner.a3_experiment(out_dir=str(out_dir))
+        (out_dir / "a3.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+        click.echo(json.dumps(result, indent=2))
+        return
+    if dry_run:
+        click.echo(json.dumps(runner.dry_run(), indent=2))
+        return
+    result = runner.run(generate_report=True)
+    click.echo(json.dumps({"metrics": result["metrics"], "gates": {k: v["status"] for k, v in result["gates"].items()}}, indent=2))
+
+
+@cli.command("report")
+@click.argument("out_dir", type=click.Path(exists=True, file_okay=False))
+@click.option("--split", type=click.Choice(["test", "tune"]), default="test", help="Split the replay was run on (checked against the summary).")
+@click.option("--experiment", type=click.Choice(["A3", "A4"], case_sensitive=False), default=None, help="Print one experiment's results.")
+def report_command(out_dir: str, split: str, experiment: str):
+    """Print the gates of the last replay in OUT_DIR, or one experiment (A3: speculation arms,
+    A4: refinement vs restart)."""
+    base = Path(out_dir)
+    if experiment and experiment.upper() == "A3":
+        path = base / "a3.json"
+        if not path.exists():
+            raise click.ClickException(f"{path} not found: run `replay ... --experiment A3` first")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("split") != split:
+            click.echo(f"warning: A3 results are for split '{data.get('split')}', not '{split}'", err=True)
+        keys = ["ttft_p50", "ttft_p95", "ttft_p50_compound", "ttft_p95_compound", "ttft_p50_single-early", "ttft_p95_single-early",
+                "cost_per_turn", "wasted_speculation_rate", "cache_hit_rate", "groundedness", "reconcile_stands", "reconcile_refined",
+                "reconcile_redone", "wasted_tokens", "predraft_waste_rate", "predraft_ready_before_end_rate"]
+        click.echo(f"A3 ({data.get('timing')}), split={data.get('split')}, scenarios={data.get('scenarios')}")
+        click.echo(f"{'metric':32s}" + "".join(f"{arm:>16s}" for arm in data["arms"]))
+        for k in keys:
+            vals = [data["arms"][arm].get(k) for arm in data["arms"]]
+            click.echo(f"{k:32s}" + "".join(f"{'n/a' if v is None else f'{v:.4f}':>16s}" for v in vals))
+        click.echo(f"groundedness_parity (full >= off - 0.02): {data.get('groundedness_parity')}")
+        return
+    if experiment and experiment.upper() == "A4":
+        path = base / "a4.json"
+        if not path.exists():
+            raise click.ClickException(f"{path} not found: run `replay ... --mode ours` on late-detail scenarios first")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("split") != split:
+            click.echo(f"warning: A4 results are for split '{data.get('split')}', not '{split}'", err=True)
+        click.echo(json.dumps({k: v for k, v in data.items() if k != "per_session"}, indent=2))
+        return
+    summary = base / "summary.json"
+    if not summary.exists():
+        raise click.ClickException(f"{summary} not found")
+    data = json.loads(summary.read_text(encoding="utf-8"))
+    click.echo(json.dumps({"mode": data.get("mode"), "gates": {k: v["status"] for k, v in data.get("gates", {}).items()}}, indent=2))
+
+
+@cli.command("coverage")
+@click.argument("telemetry_path", type=click.Path(exists=True))
+def coverage_command(telemetry_path: str):
+    """Report per-turn trace coverage of the canonical turn stages in a telemetry JSONL file."""
+    from slrag.replay.metrics import MetricCalculator
+
+    with open(telemetry_path, "r", encoding="utf-8") as f:
+        events = [json.loads(line) for line in f if line.strip()]
+    by_turn: dict = {}
+    for e in events:
+        if e.get("turn_id"):
+            by_turn.setdefault(e["turn_id"], []).append(e)
+    incomplete = 0
+    for turn_id, turn_events in by_turn.items():
+        cov = MetricCalculator.calculate_all(turn_events)["trace_coverage"]
+        if cov < 1.0:
+            incomplete += 1
+            click.echo(f"{turn_id}: trace_coverage={cov:.3f}")
+    overall = MetricCalculator.calculate_all(events)["trace_coverage"]
+    click.echo(f"turns={len(by_turn)} incomplete={incomplete} trace_coverage={overall:.4f}")
+
+
 if __name__ == "__main__":
     cli()

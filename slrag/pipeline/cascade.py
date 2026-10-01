@@ -1,134 +1,113 @@
-"""Phase 4 Speculative Prefetch Cache with Deterministic Clock Injection."""
+"""Token-level cascade trigger: confidence/entropy heuristic over streamed tokens.
+
+This is the lightweight per-token speculation trigger. The chunk-level T0/T1/T2 retrieval
+controller used by the streaming turn engine lives in `slrag.control.controller`.
+"""
 from __future__ import annotations
 
-import time
 from typing import Any, Dict, List, Optional
 
-from slrag.contracts.events import SpeculativeCacheEvent
+from slrag.contracts.events import CascadeTriggerEvent, SpeculationOutcomeEvent
+from slrag.nlp.lemmas import content_tokens
+
+BOUNDARY_CUES = (".", "?", ",", "and", "or", "what", "how", "who", "when", "explain", "summarize")
 
 
-class SpeculativeCache:
+class CascadeState:
+    IDLE = "IDLE"
+    ACCUMULATING = "ACCUMULATING"
+    SPECULATING = "SPECULATING"
+    STABLE = "STABLE"
+    INVALIDATED = "INVALIDATED"
+
+
+class CascadeController:
     def __init__(
         self,
-        ttl_ms: int = 5000,
-        max_size: int = 128,
+        config: Optional[Any] = None,
         bus: Optional[Any] = None,
         clock: Optional[Any] = None,
+        confidence_threshold: Optional[float] = None,
+        entropy_threshold: Optional[float] = None,
+        min_token_boundary: Optional[int] = None,
     ):
-        self.ttl_ms = ttl_ms
-        self.max_size = max_size
+        """Thresholds come from explicit kwargs, else `config` (SlragConfig or CascadeConfig field names), else defaults."""
+        def pick(explicit: Optional[Any], names: tuple, default: Any) -> Any:
+            if explicit is not None:
+                return explicit
+            for name in names:
+                if config is not None and hasattr(config, name):
+                    return getattr(config, name)
+            return default
+
+        self.confidence_threshold = pick(confidence_threshold, ("cascade_confidence_threshold", "confidence_threshold"), 0.72)
+        self.entropy_threshold = pick(entropy_threshold, ("cascade_entropy_threshold", "entropy_threshold"), 0.38)
+        self.min_token_boundary = pick(min_token_boundary, ("min_token_boundary",), 4)
         self.bus = bus
         self.clock = clock
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self.state = CascadeState.IDLE
+        self.tokens: List[str] = []
+        self.speculated_query: Optional[str] = None
+        self.speculation_used = False
 
-    def _now(self) -> float:
-        return self.clock.time() if self.clock else time.time()
+    def reset(self, turn_id: str = "") -> None:
+        self.state = CascadeState.IDLE
+        self.tokens = []
+        self.speculated_query = None
+        self.speculation_used = False
+        self._emit(turn_id, 0, 0.0, 0.0, "reset")
 
-    def _normalize(self, query: str) -> str:
-        return " ".join(query.strip().lower().split())
-
-    def get(self, query: str) -> Optional[List[Any]]:
-        self.cleanup_expired()
-
-        norm_q = self._normalize(query)
-        entry = self._cache.get(norm_q)
-
-        if entry is None:
-            for k, v in self._cache.items():
-                if norm_q.startswith(k) or k.startswith(norm_q):
-                    entry = v
-                    break
-
-        ts = self._now()
-
-        if entry is not None:
-            if self.bus:
-                cids = [
-                    getattr(c, "id", str(i))
-                    for i, c in enumerate(entry["chunks"])
-                ]
-
-                self.bus.publish(
-                    SpeculativeCacheEvent(
-                        action="hit",
-                        query=query,
-                        chunk_ids=cids,
-                        timestamp=str(ts),
-                    )
-                )
-
-            return entry["chunks"]
-
+    def _publish(self, event: Any) -> None:
         if self.bus:
-            self.bus.publish(
-                SpeculativeCacheEvent(
-                    action="miss",
-                    query=query,
-                    timestamp=str(ts),
-                )
-            )
+            self.bus.publish(event)
 
-        return None
+    def _ts(self) -> Dict[str, Any]:
+        return {"timestamp": self.clock.time()} if self.clock else {}
 
-    def put(self, query: str, chunks: List[Any]) -> None:
-        self.cleanup_expired()
+    def _emit(self, turn_id: str, token_idx: int, conf: float, ent: float, trigger_type: str) -> None:
+        self._publish(CascadeTriggerEvent(
+            turn_id=turn_id, token_index=token_idx, confidence=conf, entropy=ent,
+            state=self.state, trigger_type=trigger_type, **self._ts(),
+        ))
 
-        if len(self._cache) >= self.max_size:
-            oldest_key = min(
-                self._cache.keys(),
-                key=lambda k: self._cache[k]["created_at"],
-            )
-            del self._cache[oldest_key]
+    def evaluate_token(self, token: str, turn_id: str = "") -> Dict[str, Any]:
+        self.tokens.append(token)
+        token_count = len(self.tokens)
+        current_text = "".join(self.tokens).strip()
 
-        norm_q = self._normalize(query)
-        now = self._now()
+        if token_count < self.min_token_boundary:
+            self.state = CascadeState.ACCUMULATING
+            self._emit(turn_id, token_count, 0.2, 0.8, "accumulating")
+            return {"trigger": False}
 
-        self._cache[norm_q] = {
-            "chunks": chunks,
-            "created_at": now,
-        }
+        has_cue = any(token.strip().lower().endswith(c) for c in BOUNDARY_CUES)
+        confidence = min(1.0, 0.5 + 0.05 * token_count + (0.2 if has_cue else 0.0))
+        entropy = max(0.0, 1.0 - confidence)
 
-        if self.bus:
-            cids = [
-                getattr(c, "id", str(i))
-                for i, c in enumerate(chunks)
-            ]
+        if confidence >= self.confidence_threshold and entropy <= self.entropy_threshold and self.state != CascadeState.SPECULATING:
+            self.state = CascadeState.SPECULATING
+            self.speculated_query = current_text
+            self._emit(turn_id, token_count, confidence, entropy, "early_retrieval")
+            return {"trigger": True, "query": current_text}
 
-            self.bus.publish(
-                SpeculativeCacheEvent(
-                    action="set",
-                    query=query,
-                    chunk_ids=cids,
-                    timestamp=str(now),
-                )
-            )
+        self._emit(turn_id, token_count, confidence, entropy, "eval")
+        return {"trigger": False}
 
-    def invalidate(self, query: Optional[str] = None) -> None:
-        if query:
-            norm_q = self._normalize(query)
+    def finalize_turn(self, final_query: str, turn_id: str = "") -> None:
+        """Speculation is `used` if its content tokens are a prefix of the final query's (or vice versa)."""
+        if self.state != CascadeState.SPECULATING:
+            return
+        if not self.speculated_query:
+            self.state = CascadeState.INVALIDATED
+            self._publish(SpeculationOutcomeEvent(turn_id=turn_id, outcome="false_trigger", reason="unused_speculation", **self._ts()))
+            return
 
-            if norm_q in self._cache:
-                del self._cache[norm_q]
+        spec, final = content_tokens(self.speculated_query), content_tokens(final_query)
+        shorter, longer = (spec, final) if len(spec) <= len(final) else (final, spec)
+        if shorter and longer[: len(shorter)] == shorter:
+            self.state = CascadeState.STABLE
+            self.speculation_used = True
+            self._publish(SpeculationOutcomeEvent(turn_id=turn_id, outcome="used", reason="speculative_match", **self._ts()))
         else:
-            self._cache.clear()
-
-        if self.bus:
-            self.bus.publish(
-                SpeculativeCacheEvent(
-                    action="invalidate",
-                    query=query or "*",
-                    timestamp=str(self._now()),
-                )
-            )
-
-    def cleanup_expired(self) -> None:
-        now = self._now()
-
-        expired = [
-            k
-            for k, v in self._cache.items()
-            if (now - v["created_at"]) * 1000.0 > self.ttl_ms
-        ]
-
-        for k in expired:
-            del self._cache[k]
+            self.state = CascadeState.INVALIDATED
+            self._publish(SpeculationOutcomeEvent(turn_id=turn_id, outcome="invalidated", reason="query_diverged", **self._ts()))

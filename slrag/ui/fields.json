@@ -1,0 +1,101 @@
+{
+  "description": "Every field slrag/ui/trace.html reads. The page reads data only through val(obj, path) with literal dotted paths; tests/test_ui_contract.py fails if the page reads a path not listed here, or if a required event field is never emitted by the engine. Paths into list items use the list field as prefix (e.g. evidence.chunk_id); '*' stands for a map key.",
+  "common": ["event_type", "session_id", "timestamp", "cfg_hash", "llm_mode"],
+  "events": {
+    "turn_start": {
+      "required": ["turn_id"],
+      "optional": []
+    },
+    "controller_decision": {
+      "required": ["turn_id", "decision", "tier", "reason", "chunk_seq", "chunk_text", "query"],
+      "optional": ["payload.drift_cos", "payload.detail"]
+    },
+    "transcript_chunk": {
+      "required": ["turn_id", "text", "seq"],
+      "optional": []
+    },
+    "utterance_final": {
+      "required": ["turn_id", "query"],
+      "optional": []
+    },
+    "utterance_end": {
+      "required": ["turn_id", "final_text"],
+      "optional": []
+    },
+    "speculative_retrieval": {
+      "required": ["turn_id", "retrieval_id", "query", "trigger", "source", "latency_ms", "is_early"],
+      "optional": []
+    },
+    "retrieval": {
+      "required": ["turn_id", "query", "mode", "latency_ms"],
+      "optional": []
+    },
+    "sub_intent_decomposition": {
+      "required": ["turn_id", "sub_intents", "sub_intents.sub_intent_id", "sub_intents.text", "source", "is_compound"],
+      "optional": []
+    },
+    "sub_intent_retrieval": {
+      "required": ["turn_id", "sub_intent_id", "retrieval_query", "source", "evidence", "evidence.chunk_id", "evidence.doc_id", "evidence.section", "evidence.score"],
+      "optional": []
+    },
+    "sub_intent_completion": {
+      "required": ["turn_id", "sub_intent_id", "status", "reason", "is_suppressed", "is_uncertain", "dense_top1", "coverage", "thresholds.dense_top1", "thresholds.coverage"],
+      "optional": []
+    },
+    "sufficiency_check": {
+      "required": ["turn_id", "passed", "dense_top1_score", "coverage_score", "thresholds.dense_top1", "thresholds.coverage"],
+      "optional": []
+    },
+    "answer_chunk": {
+      "required": ["turn_id", "claim_id", "text", "cites", "answer_version", "first_token"],
+      "optional": []
+    },
+    "answer_delta": {
+      "required": ["turn_id", "text_delta", "ops", "ops.op", "ops.claim_id", "ops.text", "ops.cites", "answer_version", "change_type", "hashes"],
+      "optional": ["ops.prev_text_hash"]
+    },
+    "answer_version_transition": {
+      "required": ["turn_id", "payload.from", "payload.to", "payload.kept", "payload.revised", "payload.added", "payload.retracted", "payload.unchanged_hashes_ok"],
+      "optional": []
+    },
+    "plan_completed": {
+      "required": ["turn_id", "payload.relation", "payload.affected_sub_intents", "payload.delta_queries", "payload.fallback"],
+      "optional": []
+    },
+    "reconcile_completed": {
+      "required": ["turn_id", "outcome", "reason", "stands", "refined", "redone", "wasted_tokens", "predraft_ready_before_end"],
+      "optional": []
+    },
+    "suppression": {
+      "required": ["turn_id", "reason"],
+      "optional": []
+    },
+    "turn_complete": {
+      "required": ["turn_id", "ttft_ms", "retrieval_calls", "llm_calls", "tokens_in", "tokens_out", "est_cost_usd", "wasted_tokens"],
+      "optional": []
+    },
+    "turn_summary": {
+      "required": ["turn_id", "ttft_ms", "retrieval_calls", "llm_calls", "tokens_in", "tokens_out", "cost", "wasted_tokens", "status"],
+      "optional": []
+    },
+    "ledger_update": {
+      "required": ["active_turn_id"],
+      "optional": []
+    },
+    "speculative_cache": {
+      "required": ["turn_id", "action", "query", "chunk_ids"],
+      "optional": []
+    },
+    "first_token_emission": {
+      "required": ["turn_id"],
+      "optional": []
+    }
+  },
+  "summary": ["mode", "metrics", "baseline_metrics.b1", "baseline_metrics.b0", "scenario_counts.test", "scenario_counts.tune", "calibration_config.split", "calibration_config.replayed_scenarios", "gates", "gates.*.status", "gates.*.metric", "gates.*.condition", "gates.*.ours"],
+  "api": {
+    "/api/chunk/{chunk_id}": ["chunk_id", "cite", "doc_id", "section", "text"],
+    "/api/scenarios": ["id", "category", "turns", "path"],
+    "/api/run": ["session_id", "scenario_id", "mode", "events", "turn_ids", "metrics.g2_pass", "metrics.groundedness", "metrics.early_retrieval_rate", "event_list"],
+    "/api/experiments": ["split", "generated_at", "experiments", "experiments.*.label", "experiments.*.arms", "experiments.*.timing", "not_implemented"]
+  }
+}

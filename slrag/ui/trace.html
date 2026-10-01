@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SL-RAG Trace</title>
+<style>
+:root {
+  --bg: #f4f6f8; --panel: #ffffff; --ink: #18202c; --muted: #677284; --line: #e2e6ec; --soft: #f0f3f6;
+  --bar: #18202c; --bar-ink: #ffffff; --accent: #2563eb;
+  --wait: #8a929e; --prov: #d98a00; --commit: #1f9d55; --supp: #2f6fd6; --recon: #7c4dcc; --bad: #d23c3c;
+  --fresh: #0f9d8c; --cache: #9aa3ad; --b1: #6b7482;
+  --added: #e3f6ea; --revised: #fff3d6; --retracted: #fde6e6; --hl: #fff6bf;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --shadow: 0 6px 20px rgba(15, 23, 42, .10);
+}
+html[data-theme="dark"] {
+  --bg: #0f141b; --panel: #171e27; --ink: #e5e9ef; --muted: #96a1b2; --line: #2a3441; --soft: #1e2732;
+  --bar: #0b1016; --bar-ink: #e5e9ef; --accent: #6b9cff;
+  --added: #163a26; --revised: #3b3016; --retracted: #431d1d; --hl: #3d3a17;
+  --shadow: 0 6px 20px rgba(0, 0, 0, .45);
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 4px 10px; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.ghost { background: transparent; border-color: transparent; color: inherit; }
+input[type=search] { width: 100%; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+
+/* top bar */
+#topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+  background: var(--bar); color: var(--bar-ink); }
+#topbar .brand { font-weight: 700; font-size: 15px; margin-right: 6px; }
+#topbar .grow { flex: 1; }
+#topbar button { background: transparent; color: var(--bar-ink); border-color: rgba(255,255,255,.25); }
+#topbar button:hover { border-color: rgba(255,255,255,.6); }
+.cfg { font-family: var(--mono); font-size: 11px; opacity: .75; }
+
+/* banner + modal */
+#banner { display: none; align-items: center; gap: 10px; padding: 8px 14px; background: var(--bad); color: #fff; }
+#banner.show { display: flex; }
+#banner.info { background: var(--commit); }
+#banner .grow { flex: 1; }
+#banner button { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+#modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; }
+#modal.show { display: flex; }
+#modal .card { background: var(--panel); padding: 22px 26px; border-radius: 10px; box-shadow: var(--shadow); max-width: 380px; text-align: center; }
+
+/* layout */
+#layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: calc(100vh - 44px); }
+#layout.collapsed { grid-template-columns: 48px minmax(0, 1fr); }
+@media (max-width: 860px) { #layout { grid-template-columns: 48px minmax(0, 1fr); } #layout .side-full { display: none !important; } }
+#sidebar { border-right: 1px solid var(--line); background: var(--panel); padding: 10px; overflow-y: auto; }
+#layout.collapsed .side-full { display: none !important; }
+.side-icons { display: none; flex-direction: column; gap: 8px; align-items: center; }
+#layout.collapsed .side-icons { display: flex; }
+@media (max-width: 860px) { .side-icons { display: flex; } }
+.side-h { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 14px 0 6px; display: flex; justify-content: space-between; }
+.scn-group { margin-bottom: 6px; }
+.scn-group summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
+.scn { padding: 3px 6px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; gap: 6px; }
+.scn:hover { background: var(--soft); }
+.scn.sel { background: var(--accent); color: #fff; }
+.scn small { opacity: .7; }
+.hist { padding: 4px 6px; border-radius: 5px; cursor: pointer; border-bottom: 1px dashed var(--line); }
+.hist:hover { background: var(--soft); }
+.hist small { color: var(--muted); }
+#progress { margin-top: 12px; padding: 8px; border-radius: 6px; background: var(--soft); display: none; align-items: center; gap: 8px; }
+#progress.show { display: flex; }
+.spinner { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* main */
+main { padding: 12px 16px 48px; min-width: 0; }
+#runbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.counter { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; white-space: nowrap; }
+.counter b { font-family: var(--mono); margin-left: 4px; }
+.counter.b1 { opacity: .75; border-style: dashed; }
+.pill { border-radius: 14px; padding: 2px 10px; }
+.pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.tab { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; padding: 7px 14px; }
+.tab.on { border-bottom-color: var(--accent); font-weight: 600; }
+.tab kbd { font-size: 10px; color: var(--muted); margin-left: 4px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.panel + .panel { margin-top: 12px; }
+.panel h3 { margin: 0 0 8px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.muted { color: var(--muted); }
+.hidden { display: none !important; }
+#empty { display: flex; justify-content: center; padding: 60px 0; }
+#empty .card { background: var(--panel); border: 1px dashed var(--muted); border-radius: 12px; padding: 30px 36px; max-width: 520px; text-align: center; }
+#empty .card h2 { margin: 0 0 8px; }
+#dropzone { position: fixed; inset: 0; background: rgba(37, 99, 235, .12); border: 3px dashed var(--accent); display: none; align-items: center; justify-content: center; z-index: 40; font-size: 18px; font-weight: 600; }
+#dropzone.show { display: flex; }
+
+/* chips */
+.chip { display: inline-block; padding: 0 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #fff; white-space: nowrap; }
+.chip.WAIT { background: var(--wait); } .chip.PROVISIONAL { background: var(--prov); } .chip.COMMIT { background: var(--commit); }
+.chip.SUPPRESS { background: var(--supp); } .chip.RECONCILE { background: var(--recon); }
+.tier { display: inline-block; padding: 0 5px; margin-left: 3px; border-radius: 4px; font-size: 10px; border: 1px solid var(--line); color: var(--muted); }
+.badge { display: inline-block; padding: 0 7px; border-radius: 4px; font-size: 11px; border: 1px solid var(--line); background: var(--soft); white-space: nowrap; }
+.badge.active { } .badge.revised { background: var(--revised); } .badge.retracted { background: var(--retracted); }
+.badge.pass { background: var(--added); } .badge.fail { background: var(--retracted); }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 4px 0 10px; font-size: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+/* transcript */
+.trow { display: grid; grid-template-columns: 64px 70px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 5px 6px; border-radius: 5px; cursor: pointer; border-bottom: 1px dashed var(--line); }
+.trow:hover { background: var(--soft); }
+.trow.hl { background: var(--hl); }
+.trow .t { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.trow .n { font-size: 11px; color: var(--muted); }
+.boundary { margin: 6px 0; padding-top: 4px; border-top: 2px dashed var(--bad); color: var(--muted); font-size: 12px; }
+.note { font-size: 12px; color: var(--muted); margin: 4px 0; }
+.enter { animation: enter .35s ease-out; }
+@keyframes enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* retrieval */
+.lanes { position: relative; overflow-x: auto; }
+.axis { position: relative; height: 18px; margin-left: 220px; color: var(--muted); font-size: 10px; }
+.axis span { position: absolute; transform: translateX(-50%); }
+.lane { position: relative; height: 30px; border-bottom: 1px dashed var(--line); }
+.lane .lab { position: absolute; left: 0; top: 6px; width: 210px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lane .track { position: absolute; left: 220px; right: 8px; top: 0; bottom: 0; }
+.blk { position: absolute; top: 7px; height: 16px; border-radius: 4px; min-width: 5px; cursor: default; }
+.blk.fresh { background: var(--fresh); } .blk.cache { background: var(--cache); }
+.blk.b1 { background: var(--b1); opacity: .45; }
+.blk.hl { outline: 3px solid var(--prov); outline-offset: 1px; }
+.endrule { position: absolute; top: 0; bottom: 0; border-left: 2px dashed var(--bad); pointer-events: none; }
+#pop { position: fixed; z-index: 30; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 10px 12px; max-width: 380px; display: none; font-size: 12px; }
+#pop.show { display: block; }
+
+/* answer + ledger */
+.claim { padding: 7px 0; border-bottom: 1px dashed var(--line); }
+.cite { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 0 6px; margin-left: 4px; border-radius: 4px; background: #eef2ff; border: 1px solid #c7d2fe; color: #2f3fa0; cursor: pointer; }
+html[data-theme="dark"] .cite { background: #1f2a4a; border-color: #34477a; color: #b9c8ff; }
+.old { text-decoration: line-through; color: var(--bad); margin-right: 6px; }
+.new { color: var(--commit); }
+.uncertain { background: var(--revised); border-left: 3px solid var(--prov); padding: 5px 8px; margin: 6px 0; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 5px 7px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; }
+td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+tr.added td { background: var(--added); } tr.revised td { background: var(--revised); }
+tr.retracted td { background: var(--retracted); } tr.retracted td.text { text-decoration: line-through; color: var(--bad); }
+td.win { background: var(--added); } td.lose { background: var(--retracted); }
+.fp { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.ok { color: var(--commit); font-weight: 700; cursor: help; }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 1100px) { .cmp { grid-template-columns: 1fr; } }
+
+/* metrics + help */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.gcard { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--panel); }
+.gcard .h { display: flex; justify-content: space-between; font-weight: 700; }
+.gcard .v { font-family: var(--mono); font-size: 18px; margin: 4px 0; }
+.subtabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.help h4 { margin: 14px 0 6px; }
+.help kbd { font-family: var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; background: var(--soft); }
+
+/* drawer */
+#drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(500px, 94vw); background: var(--panel); border-left: 1px solid var(--line);
+  box-shadow: var(--shadow); padding: 16px; transform: translateX(105%); transition: transform .18s ease-out; z-index: 35; overflow-y: auto; }
+#drawer.open { transform: none; }
+#drawer mark { background: var(--hl); color: inherit; }
+
+/* voice input */
+#micBtn.listening { background: var(--bad); border-color: var(--bad); color: #fff; animation: pulse 1.2s ease-in-out infinite; }
+#micBtn.processing { border-color: var(--prov); }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(210, 60, 60, .55); } 50% { box-shadow: 0 0 0 7px rgba(210, 60, 60, 0); } }
+#voicePanel { display: none; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 14px; }
+#voicePanel.show { display: block; }
+#voicePanel .interim { font-style: italic; color: var(--muted); }
+.trow.pending { opacity: .65; }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <span class="brand">SL-RAG Trace</span>
+  <button id="micBtn" title="Speak a question (M)">🎤 Voice</button>
+  <span class="cfg" id="cfg"></span>
+  <span class="grow"></span>
+  <button id="themeBtn" title="Toggle dark / light">◐ Theme</button>
+  <button id="downloadBtn" title="Download this session's telemetry as .jsonl">⤓ Download trace</button>
+  <button id="linkBtn" title="Copy a link to this session">⧉ Copy link</button>
+  <button id="helpBtn" title="Help (?)">?</button>
+</div>
+<div id="voicePanel" aria-live="polite"><b id="voiceLabel"></b> <span id="voiceFinal"></span> <span id="voiceInterim" class="interim"></span></div>
+<div id="banner"><span class="grow" id="bannerText"></span><button id="bannerClose">Dismiss</button></div>
+
+<div id="layout">
+  <aside id="sidebar">
+    <div class="side-icons">
+      <button class="ghost" id="expandBtn" title="Expand sidebar">☰</button>
+      <button class="ghost" id="runIcon" title="Run selected scenario (R)">▶</button>
+    </div>
+    <div class="side-full">
+      <div style="display:flex;gap:6px">
+        <button class="primary" id="newRunBtn" style="flex:1">▶ New Run</button>
+        <button class="ghost" id="collapseBtn" title="Collapse sidebar">«</button>
+      </div>
+      <div id="picker" class="hidden" style="margin-top:8px">
+        <input type="search" id="search" placeholder="Search scenarios (S)">
+        <div class="note">Click to select · double-click to run</div>
+        <div id="scenarios"></div>
+        <button class="primary" id="runBtn" style="width:100%;margin-top:6px">Run selected (R)</button>
+      </div>
+      <div id="progress"><span class="spinner"></span><span id="progressText"></span></div>
+      <div class="side-h"><span>Session history</span><span id="histCount"></span></div>
+      <div id="history"></div>
+    </div>
+  </aside>
+
+  <main>
+    <div id="runbar"></div>
+    <nav class="tabs" id="tabs"></nav>
+    <div id="empty" class="hidden"><div class="card">
+      <h2>Load a trace to begin</h2>
+      <p class="muted">Drag and drop a telemetry <b>.jsonl</b> file anywhere on this page,<br>or pick a scenario in the sidebar and click <b>Run</b>.</p>
+      <button class="primary" id="emptyRun">▶ Choose a scenario</button>
+    </div></div>
+
+    <section id="tab-transcript" class="tabpanel">
+      <div class="panel">
+        <h3>Transcript &amp; controller decisions <button class="ghost" id="legendBtn">Legend ▾</button></h3>
+        <div id="legend" class="legend hidden"></div>
+        <div id="transcript"></div>
+      </div>
+    </section>
+    <section id="tab-retrieval" class="tabpanel hidden">
+      <div class="panel">
+        <h3><span>Retrieval timeline <span class="muted" id="tlNote"></span></span> <button id="b1Btn">Load B1 baseline</button></h3>
+        <div class="legend"><span><i class="swatch" style="background:var(--fresh)"></i>fresh retrieval</span>
+          <span><i class="swatch" style="background:var(--cache)"></i>served from cache</span>
+          <span><i class="swatch" style="background:var(--b1);opacity:.45"></i>B1 baseline</span>
+          <span><i class="swatch" style="border-left:2px dashed var(--bad);border-radius:0;width:2px"></i>end of utterance (left of it = early)</span></div>
+        <div id="lanes" class="lanes"></div>
+      </div>
+      <div class="panel"><h3>Sub-queries &amp; evidence</h3><div id="plan"></div></div>
+    </section>
+    <section id="tab-answer" class="tabpanel hidden">
+      <div class="panel"><h3>Answer <span class="muted">claims in the order they were streamed</span></h3><div id="answer"></div></div>
+    </section>
+    <section id="tab-ledger" class="tabpanel hidden">
+      <div class="panel">
+        <h3><span id="versions"></span><label><input type="checkbox" id="compareToggle"> Compare</label></h3>
+        <div id="ledger"></div>
+      </div>
+    </section>
+    <section id="tab-metrics" class="tabpanel hidden">
+      <div class="subtabs"><button class="pill on" data-sub="gates">Gates</button><button class="pill" data-sub="ablations">Ablations</button></div>
+      <div id="metrics"></div>
+    </section>
+    <section id="tab-help" class="tabpanel hidden">
+      <div class="panel help" id="help"></div>
+    </section>
+  </main>
+</div>
+
+<aside id="drawer" aria-label="Cited chunk">
+  <h3 style="display:flex;justify-content:space-between;margin:0 0 8px"><span id="drawerTitle"></span><button id="drawerClose">Close (Esc)</button></h3>
+  <div id="drawerMeta" class="muted"></div>
+  <p id="drawerText"></p>
+</aside>
+<div id="pop"></div>
+<div id="dropzone">Drop a telemetry .jsonl file to load it</div>
+<div id="modal"><div class="card"><h3>Session expired — please reload</h3>
+  <p class="muted">The server asked for credentials again.</p><button class="primary" id="reloadBtn">Reload</button></div></div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------------------------------
+// Data access. Every telemetry / API field is read through the val() helper with a dotted path; the contract test
+// (tests/test_ui_contract.py) checks each literal path against slrag/ui/fields.json.
+function val(obj, path) {
+  let cur = obj;
+  for (const part of path.split(".")) {
+    if (cur === null || cur === undefined) return undefined;
+    cur = cur[part];
+  }
+  return cur;
+}
+function type(ev) { return val(ev, "event_type"); }
+function ofType(events, t) { return events.filter((ev) => type(ev) === t); }
+function turnOf(ev) { return val(ev, "turn_id") || val(ev, "active_turn_id") || ""; }
+function sessionOf(ev) { return val(ev, "session_id") || ""; }
+function ts(ev) {
+  const t = val(ev, "timestamp");
+  if (typeof t === "number") return t;
+  const parsed = Date.parse(t);
+  return Number.isNaN(parsed) ? null : parsed / 1000;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Reactive state: setState(patch) merges and re-renders only the panels that depend on changed keys.
+const TABS = ["transcript", "retrieval", "answer", "ledger", "metrics", "help"];
+const TAB_LABELS = { transcript: "Transcript", retrieval: "Retrieval", answer: "Answer", ledger: "Ledger", metrics: "Metrics", help: "Help" };
+const AppState = {
+  events: [], b1: [], session: "", turn: "", tab: "transcript", version: null, compare: false, cmpA: null, cmpB: null,
+  scenarios: [], selected: "", pickerOpen: false, search: "", history: [], running: null, progress: "",
+  summary: null, experiments: null, metricsSub: "gates", highlight: null, banner: null, collapsed: false,
+  theme: "light", legendOpen: false, follow: true,
+  voice: { state: "idle", interim: "", finals: [] },  // idle | listening | processing
+  voiceChunks: [],  // chunks sent from the mic, shown as pending rows until the gateway's telemetry echoes them
+};
+const DEPS = {
+  events: ["runbar", "transcript", "retrieval", "answer", "ledger", "progress", "empty", "cfg"],
+  b1: ["runbar", "retrieval"], session: ["runbar", "transcript", "retrieval", "answer", "ledger", "empty", "cfg", "history"],
+  turn: ["runbar", "transcript", "retrieval", "answer"], tab: ["tabs", "empty"], version: ["ledger"], compare: ["ledger"],
+  cmpA: ["ledger"], cmpB: ["ledger"], scenarios: ["sidebar"], selected: ["sidebar"], pickerOpen: ["sidebar"], search: ["sidebar"],
+  history: ["history"], running: ["progress", "empty", "sidebar"], progress: ["progress"], summary: ["metrics"],
+  experiments: ["metrics"], metricsSub: ["metrics"], highlight: ["transcript", "retrieval"], banner: ["banner"],
+  collapsed: ["layout"], theme: ["theme"], legendOpen: ["legend"],
+  voice: ["voice", "empty"], voiceChunks: ["transcript"],
+};
+const dirty = new Set();
+let frame = 0;
+function setState(patch) {
+  Object.assign(AppState, patch);
+  for (const k of Object.keys(patch)) for (const p of DEPS[k] || []) dirty.add(p);
+  if (!frame) frame = requestAnimationFrame(flush);
+}
+function flush() {
+  frame = 0;
+  const todo = Array.from(dirty);
+  dirty.clear();
+  for (const p of todo) { try { RENDER[p](); } catch (err) { console.error("render", p, err); } }
+}
+
+// ---------------------------------------------------------------------------------------------
+// DOM helpers
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") node.className = v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+    else if (v !== undefined && v !== null && v !== false) node.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of children.flat()) if (c !== null && c !== undefined && c !== false) node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return node;
+}
+const $ = (id) => document.getElementById(id);
+function fmt(v, d) {
+  if (v === null || v === undefined || v === "") return "–";
+  if (typeof v === "boolean") return v ? "yes" : "no";
+  if (typeof v === "number") {
+    if (Number.isInteger(v) && d === undefined) return String(v);
+    if (v !== 0 && Math.abs(v) < 0.01) return v.toPrecision(2);  // costs such as $0.00046 must not read as 0.000
+    return v.toFixed(d === undefined ? 3 : d);
+  }
+  return String(v);
+}
+const keyed = new WeakMap();
+// Append-only list sync: new items fade in; a changed prefix (new session / turn) re-renders without animation.
+function syncList(container, items, keyFn, renderFn) {
+  const keys = items.map(keyFn);
+  const old = keyed.get(container) || [];
+  const prefix = old.length <= keys.length && old.every((k, i) => k === keys[i]);
+  if (!prefix) container.replaceChildren();
+  const start = prefix ? old.length : 0;
+  for (let i = start; i < items.length; i++) {
+    const node = renderFn(items[i], i);
+    if (prefix && old.length) node.classList.add("enter");
+    container.append(node);
+  }
+  keyed.set(container, keys);
+}
+function friendly(reason) {
+  const map = {
+    too_few_content_tokens: "waiting: not enough words yet", slots_insufficient: "waiting: the question is not specific yet",
+    first_slot_ok: "first retrievable query", new_information: "new information since the last retrieval",
+    slot_change: "a number, date or name changed", awaiting_stability: "waiting for the query to settle",
+    committed: "already committed", multi_intent_boundary: "second question detected: commit and split",
+    stable_2: "query stable for 2 chunks", presentation_restructure: "presentation request: answer from the ledger",
+    evidence_unchanged: "pre-draft evidence unchanged", epoch_changed: "superseded mid-utterance",
+  };
+  return map[reason] || String(reason || "").replace(/_/g, " ");
+}
+
+// ---------------------------------------------------------------------------------------------
+// Network: fetch wrapper (401 -> session-expired modal), telemetry WebSocket, file drop
+async function api(path, options) {
+  let res;
+  try { res = await fetch(path, Object.assign({ credentials: "same-origin" }, options || {})); }
+  catch (err) { showBanner("Server unreachable — is uvicorn running?"); throw err; }
+  if (res.status === 401) { $("modal").classList.add("show"); throw new Error("401"); }
+  return res;
+}
+let ws = null;
+function connect() {
+  try { ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/telemetry`); }
+  catch (err) { showBanner("Live telemetry unavailable — drop a .jsonl file instead"); return; }
+  ws.onmessage = (msg) => { try { ingest(JSON.parse(msg.data)); } catch (err) { /* non-JSON frame */ } };
+  ws.onclose = (e) => {
+    if (e.code === 1008 || e.code === 4401) { $("modal").classList.add("show"); return; }
+    showBanner("Live telemetry disconnected — retrying in 5 s");
+    setTimeout(connect, 5000);
+  };
+}
+function ingest(ev) {
+  AppState.events.push(ev);
+  const s = sessionOf(ev);
+  const patch = { events: AppState.events };
+  if (AppState.follow && s && s !== AppState.session && (!AppState.running || s === AppState.running.session)) {
+    patch.session = s; patch.turn = ""; patch.version = null;
+  }
+  if (AppState.voice.state === "processing" && s === Voice.session && (type(ev) === "answer_chunk" || type(ev) === "turn_summary")) {
+    patch.voice = Object.assign({}, AppState.voice, { state: Voice.active ? "listening" : "idle" });
+  }
+  if (AppState.running && s === AppState.running.session) {
+    const label = PROGRESS[type(ev)];
+    if (label) patch.progress = label;
+    const done = ofType(AppState.events.filter((e) => sessionOf(e) === s), "turn_complete").length;
+    if (done >= AppState.running.turns) finishRun();
+  }
+  setState(patch);
+}
+const PROGRESS = {
+  turn_start: "Listening…", controller_decision: "Listening…", speculative_retrieval: "Retrieving…", sub_intent_retrieval: "Retrieving…",
+  sub_intent_decomposition: "Planning…", draft_completed: "Drafting…", first_token_emission: "Drafting…", answer_chunk: "Streaming answer…",
+  verification: "Verifying…", plan_completed: "Planning the refinement…", reconcile_completed: "Reconciling…",
+};
+function parseJsonl(text) {
+  const out = [];
+  text.split(/\r?\n/).forEach((line, i) => {
+    if (!line.trim()) return;
+    try { out.push(JSON.parse(line)); } catch (err) { throw new Error(`line ${i + 1} is not JSON`); }
+  });
+  return out;
+}
+function loadEvents(events, label) {
+  if (!events.length) { showBanner(`${label}: no events`); return; }
+  setState({ events, session: sessionOf(events[0]), turn: "", version: null, follow: false, running: null });
+}
+
+// ---------------------------------------------------------------------------------------------
+// Session view helpers
+function sessionEvents() { return AppState.events.filter((ev) => sessionOf(ev) === AppState.session); }
+function turnIds(events) { const ids = []; for (const ev of events) { const t = turnOf(ev); if (t && !ids.includes(t)) ids.push(t); } return ids; }
+function currentTurn(events) {
+  const ids = turnIds(events);
+  return ids.includes(AppState.turn) ? AppState.turn : ids[ids.length - 1] || "";
+}
+function turnEvents(events, turn) { return events.filter((ev) => turnOf(ev) === turn); }
+function turnStart(turn) { const s = ofType(turn, "turn_start")[0] || ofType(turn, "transcript_chunk")[0] || turn[0]; return s ? ts(s) : null; }
+function utteranceEnd(turn) { const e = ofType(turn, "utterance_final")[0] || ofType(turn, "utterance_end")[0]; return e ? ts(e) : null; }
+
+// ---------------------------------------------------------------------------------------------
+// Ledger reconstruction from answer_delta ops (keep / revise / retract / add)
+function ledgerVersions(events) {
+  const versions = [];
+  let current = new Map();
+  for (const ev of ofType(events, "answer_delta")) {
+    const ops = val(ev, "ops") || [];
+    if (!ops.length) continue;
+    const hashes = val(ev, "hashes") || {};
+    const next = new Map();
+    for (const [id, c] of current) if (c.status !== "retracted") next.set(id, Object.assign({}, c, { diff: "preserved", prev: null }));
+    for (const op of ops) {
+      const id = val(op, "claim_id");
+      const kind = val(op, "op");
+      const prior = next.get(id);
+      if (kind === "add") next.set(id, { text: val(op, "text"), cites: val(op, "cites") || [], status: "active", diff: "added", prev: null });
+      else if (kind === "revise") next.set(id, { text: val(op, "text"), cites: val(op, "cites") || [], status: "revised", diff: "revised",
+                                                   prev: prior ? prior.text : null, prevHash: val(op, "prev_text_hash") });
+      else if (kind === "retract" && prior) next.set(id, Object.assign({}, prior, { status: "retracted", diff: "retracted" }));
+    }
+    for (const [id, c] of next) if (hashes[id] !== undefined) c.hash = hashes[id];
+    versions.push({ v: val(ev, "answer_version"), change: val(ev, "change_type"), turn: turnOf(ev), claims: next });
+    current = next;
+  }
+  return versions;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Renderers
+const RENDER = {};
+
+RENDER.theme = () => {
+  document.documentElement.setAttribute("data-theme", AppState.theme);
+  try { localStorage.setItem("slrag-theme", AppState.theme); } catch (err) { /* storage blocked */ }
+};
+RENDER.layout = () => { $("layout").classList.toggle("collapsed", AppState.collapsed); };
+RENDER.banner = () => {
+  const b = AppState.banner;
+  $("banner").classList.toggle("show", !!b);
+  $("banner").classList.toggle("info", !!(b && b.info));
+  $("bannerText").textContent = b ? b.text : "";
+};
+let bannerTimer = 0;
+function showBanner(text, info) {
+  clearTimeout(bannerTimer);
+  setState({ banner: { text, info } });
+  bannerTimer = setTimeout(() => setState({ banner: null }), 8000);
+}
+RENDER.cfg = () => {
+  const withHash = AppState.events.filter((ev) => sessionOf(ev) === AppState.session && val(ev, "cfg_hash"));
+  const last = withHash[withHash.length - 1];
+  $("cfg").textContent = last ? `Config: ${String(val(last, "cfg_hash")).slice(0, 6)}${val(last, "llm_mode") ? " · LLM: " + val(last, "llm_mode") : ""}` : "";
+};
+RENDER.tabs = () => {
+  $("tabs").replaceChildren(...TABS.map((t, i) => el("button", { class: `tab${AppState.tab === t ? " on" : ""}`, onclick: () => setState({ tab: t }) },
+    TAB_LABELS[t], el("kbd", {}, String(i + 1)))));
+  for (const t of TABS) $(`tab-${t}`).classList.toggle("hidden", AppState.tab !== t);
+  if (AppState.tab === "metrics" && !AppState.summary) loadMetrics();
+  RENDER.empty();
+};
+RENDER.empty = () => {
+  const hasData = sessionEvents().length > 0 || AppState.running || (AppState.voice.state !== "idle" && AppState.session === Voice.session);
+  const dataTab = ["transcript", "retrieval", "answer", "ledger"].includes(AppState.tab);
+  $("empty").classList.toggle("hidden", hasData || !dataTab);
+  for (const t of ["transcript", "retrieval", "answer", "ledger"]) {
+    if (AppState.tab === t) $(`tab-${t}`).classList.toggle("hidden", !hasData);
+  }
+};
+RENDER.sidebar = () => {
+  $("picker").classList.toggle("hidden", !AppState.pickerOpen);
+  const q = AppState.search.toLowerCase();
+  const groups = {};
+  for (const sc of AppState.scenarios) {
+    const id = val(sc, "id"); const cat = val(sc, "category") || "other";
+    if (q && !id.toLowerCase().includes(q) && !cat.toLowerCase().includes(q)) continue;
+    (groups[cat] = groups[cat] || []).push(sc);
+  }
+  $("scenarios").replaceChildren(...Object.keys(groups).sort().map((cat) => el("details", { class: "scn-group", open: q ? true : cat === groupOf(AppState.selected) },
+    el("summary", {}, `${cat.replace(/[-_]/g, " ")} (${groups[cat].length})`),
+    ...groups[cat].map((sc) => el("div", {
+      class: `scn${val(sc, "id") === AppState.selected ? " sel" : ""}`,
+      onclick: () => setState({ selected: val(sc, "id") }), ondblclick: () => { setState({ selected: val(sc, "id") }); runSelected(); },
+    }, val(sc, "id"), el("small", {}, `${val(sc, "turns")} turn${val(sc, "turns") > 1 ? "s" : ""}`))))));
+  $("runBtn").disabled = !AppState.selected || !!AppState.running;
+};
+function groupOf(id) { const sc = AppState.scenarios.find((s) => val(s, "id") === id); return sc ? val(sc, "category") : ""; }
+RENDER.progress = () => {
+  $("progress").classList.toggle("show", !!AppState.running);
+  $("progressText").textContent = AppState.running ? `${AppState.running.scenario}: ${AppState.progress || "Starting…"}` : "";
+};
+RENDER.history = () => {
+  $("histCount").textContent = AppState.history.length ? String(AppState.history.length) : "";
+  $("history").replaceChildren(...(AppState.history.length ? AppState.history.map((h) => el("div", {
+    class: "hist", title: h.session, onclick: () => openSession(h.session),
+  }, el("div", {}, el("b", {}, h.scenario), " ", h.g2 === null ? "" : h.g2 ? "✅" : "❌"),
+    el("small", {}, `${new Date(h.at).toLocaleTimeString()} · G2 ${h.g2 === null ? "–" : h.g2 ? "pass" : "fail"} · groundedness ${fmt(h.groundedness, 2)}`)))
+    : [el("div", { class: "note" }, "No runs yet.")]));
+};
+RENDER.legend = () => {
+  $("legend").classList.toggle("hidden", !AppState.legendOpen);
+  $("legend").replaceChildren(
+    ...[["WAIT", "--wait", "not enough to retrieve yet"], ["PROVISIONAL", "--prov", "early retrieval while speaking"], ["COMMIT", "--commit", "query settled: final retrieval"],
+        ["SUPPRESS", "--supp", "presentation request: no retrieval"], ["REDONE / STANDS", "--recon", "pre-draft reconciled at the end"]]
+      .map(([k, c, d]) => el("span", {}, el("i", { class: "swatch", style: `background:var(${c})` }), el("b", {}, k), d)),
+    el("span", {}, el("span", { class: "tier" }, "T0"), "presentation rules"), el("span", {}, el("span", { class: "tier" }, "T1"), "slots / drift rules"),
+    el("span", {}, el("span", { class: "tier" }, "T2"), "LLM classifier"));
+};
+
+RENDER.runbar = () => {
+  const events = sessionEvents();
+  const turn = currentTurn(events);
+  const tev = turnEvents(events, turn);
+  const ids = turnIds(events);
+  const done = ofType(tev, "turn_complete").concat(ofType(tev, "turn_summary"));
+  const last = done[done.length - 1];
+  const answered = ofType(tev, "first_token_emission").length || ofType(tev, "answer_chunk").length || ofType(tev, "answer_delta").some((e) => val(e, "text_delta"));
+  const items = [
+    ["Turn", null],
+    ["Time to first token", last && answered ? `${fmt(val(last, "ttft_ms"), 0)} ms` : "–"],
+    ["Retrieval calls", last ? fmt(val(last, "retrieval_calls")) : "–"],
+    ["LLM calls", last ? fmt(val(last, "llm_calls")) : "–"],
+    ["Tokens in / out", last ? `${fmt(val(last, "tokens_in"))} / ${fmt(val(last, "tokens_out"))}` : "–"],
+    ["Cost", last ? `$${fmt(val(last, "est_cost_usd") !== undefined ? val(last, "est_cost_usd") : val(last, "cost"), 5)}` : "–"],
+    ["Wasted tokens", last ? fmt(val(last, "wasted_tokens")) : "–"],
+  ];
+  const nodes = [];
+  if (ids.length > 1) nodes.push(...ids.map((t) => el("button", { class: `pill${t === turn ? " on" : ""}`, onclick: () => setState({ turn: t }) }, t)));
+  nodes.push(...items.slice(1).map(([k, v]) => el("span", { class: "counter" }, k, el("b", {}, v))));
+  const b1done = ofType(AppState.b1, "turn_complete");
+  if (b1done.length) nodes.push(el("span", { class: "counter b1" }, "B1 time to first token", el("b", {}, `${fmt(val(b1done[0], "ttft_ms"), 0)} ms`)));
+  $("runbar").replaceChildren(...nodes);
+};
+
+RENDER.transcript = () => {
+  const events = sessionEvents();
+  const turn = currentTurn(events);
+  const tev = turnEvents(events, turn);
+  const t0 = turnStart(tev);
+  const decisions = ofType(tev, "controller_decision").filter((ev) => val(ev, "chunk_seq") > 0);
+  const rows = decisions.length ? decisions : ofType(tev, "transcript_chunk");
+  const items = rows.map((ev) => ({ ev, kind: decisions.length ? "decision" : "chunk" }));
+  const end = ofType(tev, "utterance_final")[0] || ofType(tev, "utterance_end")[0];
+  if (end) items.push({ ev: end, kind: "end" });
+  for (const ev of ofType(tev, "controller_decision").filter((e) => val(e, "decision") === "COMMIT_RECONCILE")) items.push({ ev, kind: "reconcile" });
+  for (const ev of ofType(tev, "plan_completed")) items.push({ ev, kind: "plan" });
+  // Mic chunks already sent but not yet echoed by the gateway's telemetry (shown on the latest turn only).
+  const echoed = new Set(ofType(events, "transcript_chunk").map((ev) => val(ev, "seq")));
+  const ids = turnIds(events);
+  if (!turn || turn === ids[ids.length - 1]) {
+    for (const c of AppState.voiceChunks) if (c.session === AppState.session && !echoed.has(c.seq)) items.push({ ev: null, kind: "pending", chunk: c });
+  }
+  const box = $("transcript");
+  if (!items.length) { box.replaceChildren(el("div", { class: "note" }, "Waiting for the first chunk…")); keyed.delete(box); return; }
+  syncList(box, items, (it) => (it.kind === "pending" ? `${AppState.session}|pending|${it.chunk.seq}`
+    : `${AppState.session}|${turn}|${it.kind}|${val(it.ev, "chunk_seq") || val(it.ev, "seq") || ""}|${ts(it.ev)}`), (it) => {
+    if (it.kind === "pending") return el("div", { class: "trow pending", title: "Sent from the microphone; waiting for the gateway to log it" },
+      el("span", { class: "t" }, "🎤"), el("span", { class: "n" }, `Chunk #${it.chunk.seq}`), el("span", {}, it.chunk.text), el("span", { class: "note" }, "sent"));
+    const ev = it.ev;
+    const rel = t0 !== null && ts(ev) !== null ? `+${(ts(ev) - t0).toFixed(2)}s` : "";
+    if (it.kind === "end") return el("div", { class: "boundary" }, `${rel} · user stopped speaking: “${val(ev, "query") || val(ev, "final_text") || ""}”`);
+    if (it.kind === "plan") return el("div", { class: "note" }, `Refinement plan: ${val(ev, "payload.relation")} → affects ${(val(ev, "payload.affected_sub_intents") || []).join(", ") || "no existing sub-question"}`
+      + `${val(ev, "payload.fallback") ? " (fallback)" : ""} · delta queries: ${(val(ev, "payload.delta_queries") || []).join(" | ")}`);
+    if (it.kind === "reconcile") return el("div", { class: "trow", title: friendly(val(ev, "payload.detail")) }, el("span", { class: "t" }, rel), el("span", { class: "n" }, "Pre-draft"),
+      el("span", {}, "Reconcile the commit-time draft with the final evidence"), el("span", {}, el("span", { class: "chip RECONCILE" }, String(val(ev, "reason") || "").toUpperCase()), el("span", { class: "tier" }, val(ev, "tier"))));
+    if (it.kind === "chunk") return el("div", { class: "trow" }, el("span", { class: "t" }, rel), el("span", { class: "n" }, `Chunk #${val(ev, "seq")}`), el("span", {}, val(ev, "text")), el("span", {}));
+    const decision = val(ev, "decision");
+    const drift = val(ev, "payload.drift_cos");
+    const hl = AppState.highlight && AppState.highlight.key === rowKey(ev);
+    return el("div", {
+      class: `trow${hl ? " hl" : ""}`, "data-key": rowKey(ev),
+      title: `${friendly(val(ev, "reason"))}${drift !== undefined && drift !== null ? ` · similarity to last retrieval ${fmt(drift, 2)}` : ""}${val(ev, "query") ? `\nquery: ${val(ev, "query")}` : ""}`,
+      onclick: () => setState({ highlight: { key: rowKey(ev), query: val(ev, "query"), time: ts(ev), turn } }),
+    }, el("span", { class: "t" }, rel), el("span", { class: "n" }, `Chunk #${val(ev, "chunk_seq")}`), el("span", {}, val(ev, "chunk_text")),
+      el("span", {}, el("span", { class: `chip ${decision}` }, decision), el("span", { class: "tier" }, val(ev, "tier"))));
+  });
+  for (const row of box.querySelectorAll(".trow[data-key]")) row.classList.toggle("hl", !!(AppState.highlight && AppState.highlight.key === row.getAttribute("data-key")));
+};
+function rowKey(ev) { return `${turnOf(ev)}#${val(ev, "chunk_seq")}`; }
+
+// Retrieval swimlanes: one lane per sub-query (exact query match), plus the whole-utterance lane.
+function retrievalBlocks(events) {
+  const out = [];
+  for (const ev of events) {
+    if (type(ev) === "speculative_retrieval") out.push({ id: val(ev, "retrieval_id"), t: ts(ev), q: val(ev, "query"), trigger: val(ev, "trigger"), source: val(ev, "source"), lat: val(ev, "latency_ms"), early: val(ev, "is_early") });
+    else if (type(ev) === "retrieval") out.push({ id: "", t: ts(ev), q: val(ev, "query"), trigger: val(ev, "mode") === "cache" ? "cache reuse" : "final", source: val(ev, "mode") === "cache" ? "cache" : "fresh", lat: val(ev, "latency_ms"), early: false });
+  }
+  return out;
+}
+RENDER.retrieval = () => {
+  const events = sessionEvents();
+  const turn = currentTurn(events);
+  const tev = turnEvents(events, turn);
+  const t0 = turnStart(tev); const tEnd = utteranceEnd(tev);
+  const blocks = retrievalBlocks(tev);
+  const subs = ofType(tev, "sub_intent_retrieval");
+  let b1 = [], b1Shift = 0;
+  if (AppState.b1.length) {
+    const b1Turns = turnIds(AppState.b1);
+    const b1Turn = turnEvents(AppState.b1, b1Turns.includes(turn) ? turn : b1Turns[0]);
+    b1 = retrievalBlocks(b1Turn);
+    const b1End = utteranceEnd(b1Turn);
+    if (b1End !== null && tEnd !== null) b1Shift = tEnd - b1End;
+  }
+  renderPlan(tev);
+  if (!blocks.length && !b1.length) { $("lanes").replaceChildren(el("div", { class: "note" }, "No retrievals in this turn (for example a presentation request answered from the ledger).")); $("tlNote").textContent = ""; return; }
+  const lanes = [];
+  const laneOf = (q) => {
+    const sub = subs.find((s) => val(s, "retrieval_query") === q);
+    const key = sub ? `sub:${val(sub, "sub_intent_id")}` : "utterance";
+    let lane = lanes.find((l) => l.key === key);
+    if (!lane) { lane = { key, label: sub ? `${val(sub, "sub_intent_id")}: ${val(sub, "retrieval_query")}` : "Whole utterance (as spoken so far)", sub, blocks: [] }; lanes.push(lane); }
+    return lane;
+  };
+  for (const s of subs) laneOf(val(s, "retrieval_query"));
+  for (const b of blocks) laneOf(b.q).blocks.push(Object.assign({ b1: false }, b));
+  if (b1.length) lanes.push({ key: "b1", label: "B1 baseline (recorded run)", blocks: b1.map((b) => Object.assign({ b1: true }, b, { t: b.t === null ? null : b.t + b1Shift })) });
+  const rel = (t) => (t === null || t0 === null ? 0 : t - t0);
+  const maxT = Math.max(0.6, rel(tEnd) + 0.1, ...lanes.flatMap((l) => l.blocks.map((b) => rel(b.t) + (b.lat || 0) / 1000))) * 1.06;
+  const pct = (s) => `${Math.max(0, Math.min(100, (s / maxT) * 100))}%`;
+  const axis = el("div", { class: "axis" });
+  const step = maxT > 4 ? 1 : maxT > 1.5 ? 0.5 : 0.2;
+  for (let s = 0; s <= maxT; s += step) axis.append(el("span", { style: `left:${pct(s)}` }, `${s.toFixed(1)}s`));
+  const nodes = [axis];
+  const hl = AppState.highlight;
+  for (const lane of lanes) {
+    const track = el("div", { class: "track" });
+    if (tEnd !== null) track.append(el("div", { class: "endrule", style: `left:${pct(rel(tEnd))}` }));
+    for (const b of lane.blocks) {
+      const x = rel(b.t);
+      const isHl = hl && !b.b1 && hl.turn === turn && ((hl.query && b.q === hl.query) || (hl.time !== null && b.t !== null && Math.abs(b.t - hl.time) < 1e-6));
+      const node = el("div", { class: `blk ${b.b1 ? "b1" : b.source === "cache" ? "cache" : "fresh"}${isHl ? " hl" : ""}`,
+        style: `left:${pct(x)};width:${b.lat ? pct(b.lat / 1000) : "5px"}` });
+      node.addEventListener("mouseenter", (e) => showPop(e, b, lane, tev));
+      node.addEventListener("mouseleave", hidePop);
+      track.append(node);
+    }
+    nodes.push(el("div", { class: "lane" }, el("div", { class: "lab", title: lane.label }, lane.label), track));
+  }
+  const early = blocks.filter((b) => b.early).length;
+  $("tlNote").textContent = `· ${early} of ${blocks.length} retrievals happened before the user stopped speaking`;
+  $("lanes").replaceChildren(...nodes);
+};
+const chunkInfo = new Map();
+async function chunk(id) {
+  if (chunkInfo.has(id)) return chunkInfo.get(id);
+  const p = api(`/api/chunk/${encodeURIComponent(id)}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  chunkInfo.set(id, p);
+  return p;
+}
+function showPop(e, b, lane, tev) {
+  const pop = $("pop");
+  const evidence = lane.sub ? (val(lane.sub, "evidence") || []).slice(0, 3).map((x) => ({ id: val(x, "chunk_id"), score: val(x, "score"), section: val(x, "section"), doc: val(x, "doc_id") })) : [];
+  const set = ofType(tev, "speculative_cache").find((c) => val(c, "action") === "set" && val(c, "query") === b.q);
+  const ids = evidence.length ? evidence : ((set && val(set, "chunk_ids")) || []).slice(0, 3).map((id) => ({ id }));
+  const list = el("ol", { style: "margin:6px 0 0;padding-left:18px" }, ...ids.map((x) => {
+    const li = el("li", {}, x.section ? `${x.section} (${x.doc})` : x.id, x.score !== undefined ? ` · score ${fmt(x.score, 4)}` : "");
+    if (!x.section) chunk(x.id).then((c) => { if (c) li.textContent = `${val(c, "section")} (${val(c, "doc_id")})`; });
+    return li;
+  }));
+  pop.replaceChildren(el("div", {}, el("b", {}, b.b1 ? "B1 baseline retrieval" : `${b.source === "cache" ? "Served from cache" : "Fresh retrieval"} · ${b.trigger}`)),
+    el("div", { style: "margin:4px 0" }, `“${b.q}”`),
+    el("div", { class: "muted" }, `latency ${b.lat ? fmt(b.lat, 0) + " ms" : "not logged"} · ${b.early ? "before" : "after"} the user stopped speaking`),
+    ids.length ? el("div", { style: "margin-top:6px" }, el("b", {}, "Top chunks"), list) : el("div", { class: "muted", style: "margin-top:6px" }, "Result chunks are not logged for this retrieval."));
+  pop.classList.add("show");
+  const r = e.target.getBoundingClientRect();
+  pop.style.left = `${Math.min(window.innerWidth - 400, r.left)}px`;
+  pop.style.top = `${r.bottom + 8}px`;
+}
+function hidePop() { $("pop").classList.remove("show"); }
+
+function renderPlan(tev) {
+  const box = $("plan");
+  const decomposition = ofType(tev, "sub_intent_decomposition")[0];
+  const completions = ofType(tev, "sub_intent_completion");
+  const parts = [];
+  if (decomposition) parts.push(el("div", { class: "note" }, `Planner: ${val(decomposition, "source")}${val(decomposition, "is_compound") ? " · compound question" : ""}`));
+  for (const r of ofType(tev, "sub_intent_retrieval")) {
+    const id = val(r, "sub_intent_id");
+    const c = completions.find((x) => val(x, "sub_intent_id") === id);
+    const ok = c ? !val(c, "is_suppressed") : null;
+    parts.push(el("div", { class: "claim" },
+      el("div", {}, el("b", {}, id), " ", val(r, "retrieval_query"), " ", el("span", { class: `badge ${val(r, "source") === "cache" ? "" : ""}` }, val(r, "source") === "cache" ? "from cache" : "fresh"), " ",
+        ok === null ? null : el("span", { class: `badge ${ok ? "pass" : "fail"}`, title: friendly(val(c, "reason")) }, ok ? "enough evidence" : "insufficient evidence")),
+      c ? el("div", { class: "note" }, `best match ${fmt(val(c, "dense_top1"), 3)} (needs ≥ ${fmt(val(c, "thresholds.dense_top1"), 2)}) · query coverage ${fmt(val(c, "coverage"), 3)} (needs ≥ ${fmt(val(c, "thresholds.coverage"), 2)})`) : null,
+      el("table", {}, el("tr", {}, el("th", {}, "section"), el("th", {}, "document"), el("th", {}, "score")),
+        ...(val(r, "evidence") || []).map((x) => el("tr", {}, el("td", {}, el("span", { class: "cite", onclick: () => openChunk(val(x, "chunk_id"), val(r, "retrieval_query"), val(x, "score")) }, val(x, "section") || val(x, "chunk_id"))),
+          el("td", {}, val(x, "doc_id")), el("td", { class: "num" }, fmt(val(x, "score"), 4)))))));
+  }
+  for (const s of ofType(tev, "sufficiency_check")) {
+    parts.push(el("div", { class: "note" }, `Evidence gate: ${val(s, "passed") ? "enough evidence" : "insufficient"} · best match ${fmt(val(s, "dense_top1_score"), 3)} (needs ≥ ${fmt(val(s, "thresholds.dense_top1"), 2)}) · coverage ${fmt(val(s, "coverage_score"), 3)} (needs ≥ ${fmt(val(s, "thresholds.coverage"), 2)})`));
+  }
+  box.replaceChildren(...(parts.length ? parts : [el("div", { class: "note" }, "No sub-queries for this turn.")]));
+}
+
+RENDER.answer = () => {
+  const events = sessionEvents();
+  const turn = currentTurn(events);
+  const tev = turnEvents(events, turn);
+  const versions = ledgerVersions(events);
+  const latest = new Map();
+  for (const v of versions) for (const [id, c] of v.claims) latest.set(id, c);
+  const box = $("answer");
+  const chunks = ofType(tev, "answer_chunk");
+  const extra = [];
+  for (const c of ofType(tev, "sub_intent_completion")) {
+    if (val(c, "is_suppressed") || val(c, "is_uncertain")) extra.push(el("div", { class: "uncertain" }, `${val(c, "sub_intent_id")}: ${val(c, "is_suppressed") ? "not answered" : "answered with uncertainty"} — ${friendly(val(c, "reason")) || "low evidence"}`));
+  }
+  const supp = ofType(tev, "suppression")[0];
+  if (!chunks.length) {
+    const text = ofType(tev, "answer_delta").map((ev) => val(ev, "text_delta")).join("");
+    const transition = ofType(tev, "answer_version_transition")[0];
+    const parts = [];
+    if (supp) parts.push(el("div", { class: "note" }, "Presentation request: re-rendered from the existing answer, no retrieval."));
+    if (text.trim()) parts.push(el("div", { class: "claim", style: "white-space:pre-wrap" }, text));
+    else if (transition && !(val(transition, "payload.added") || []).length && !(val(transition, "payload.revised") || []).length)
+      parts.push(el("div", { class: "note" }, `No change to the previous answer: the follow-up kept every claim (answer v${val(transition, "payload.to")}).`));
+    box.replaceChildren(...parts, ...extra, ...(parts.length || extra.length ? [] : [el("div", { class: "note" }, "Waiting for the answer…")]));
+    keyed.delete(box);
+    return;
+  }
+  const holder = box.querySelector(".claims") || el("div", { class: "claims" });
+  if (!holder.parentNode) box.replaceChildren(holder);
+  syncList(holder, chunks, (ev) => `${AppState.session}|${val(ev, "claim_id")}|${val(ev, "answer_version")}`, (ev) => {
+    const c = latest.get(val(ev, "claim_id"));
+    const status = c ? c.status : "active";
+    return el("div", { class: "claim" }, el("span", { class: `badge ${status}`, title: status === "revised" && c && c.prev ? `before: ${c.prev}\nafter: ${c.text}` : "" }, status), " ",
+      status === "revised" && c && c.prev ? [el("span", { class: "old" }, c.prev), el("span", { class: "new" }, val(ev, "text"))] : val(ev, "text"),
+      ...(val(ev, "cites") || []).map((cite) => el("span", { class: "cite", onclick: (e) => { e.stopPropagation(); openChunk(cite, val(ev, "text")); } }, cite)));
+  });
+  for (const n of box.querySelectorAll(".uncertain")) n.remove();
+  for (const n of extra) box.append(n);
+};
+
+RENDER.ledger = () => {
+  const versions = ledgerVersions(sessionEvents());
+  const box = $("ledger");
+  if (!versions.length) { $("versions").replaceChildren(el("span", { class: "muted" }, "Ledger")); box.replaceChildren(el("div", { class: "note" }, "No answer versions yet.")); return; }
+  const labels = versions.map((v) => v.v);
+  let cur = labels.includes(AppState.version) ? AppState.version : labels[labels.length - 1];
+  $("versions").replaceChildren(...labels.map((v) => el("button", { class: `pill${v === cur ? " on" : ""}`, onclick: () => setState({ version: v }) }, `v${v}`)),
+    el("span", { class: "muted", style: "margin-left:8px;font-weight:normal" }, "← → to switch"));
+  $("compareToggle").checked = AppState.compare;
+  const byV = (v) => versions.find((x) => x.v === v);
+  if (!AppState.compare) { box.replaceChildren(versionTable(byV(cur), null)); return; }
+  const a = labels.includes(AppState.cmpA) ? AppState.cmpA : labels[0];
+  const b = labels.includes(AppState.cmpB) ? AppState.cmpB : labels[labels.length - 1];
+  const pick = (value, key) => el("select", { onchange: (e) => setState({ [key]: Number(e.target.value) }) }, ...labels.map((v) => el("option", { value: v, selected: v === value }, `v${v}`)));
+  box.replaceChildren(el("div", { class: "cmp" },
+    el("div", {}, el("div", { class: "note" }, "From ", pick(a, "cmpA")), versionTable(byV(a), null)),
+    el("div", {}, el("div", { class: "note" }, "To ", pick(b, "cmpB")), versionTable(byV(b), byV(a)))));
+};
+function versionTable(v, base) {
+  const rows = [];
+  for (const [id, c] of v.claims) {
+    let diff = base ? "preserved" : c.status === "retracted" ? "retracted" : c.diff === "added" && v.v > 1 ? "added" : c.diff === "revised" ? "revised" : "";
+    if (base) {
+      const b = base.claims.get(id);
+      if (!b) diff = "added";
+      else if (c.status === "retracted") diff = "retracted";
+      else if (b.hash !== c.hash) diff = "revised";
+    }
+    const same = base && diff === "preserved";
+    rows.push(el("tr", { class: diff === "preserved" ? "" : diff },
+      el("td", { class: "fp" }, id),
+      el("td", { class: "text" }, diff === "revised" && (base ? base.claims.get(id) : c.prev) ? el("span", { class: "old" }, base ? base.claims.get(id).text : c.prev) : null,
+        c.text, ...(c.cites || []).map((cite) => el("span", { class: "cite", onclick: () => openChunk(cite, c.text) }, cite))),
+      el("td", {}, el("span", { class: `badge ${c.status}`, title: c.status === "revised" && c.prev ? `before: ${c.prev}\nafter: ${c.text}` : "" }, c.status)),
+      el("td", {}, el("span", { class: "fp", title: "fingerprint of the claim text and its citations" }, c.hash ? c.hash.slice(0, 8) : "–"),
+        same ? el("span", { class: "ok", title: `Byte-identical to v${base.v} — not rewritten by the delta planner` }, " ✓") : null)));
+  }
+  if (base) for (const [id, b] of base.claims) if (!v.claims.has(id)) rows.push(el("tr", { class: "retracted" }, el("td", { class: "fp" }, id), el("td", { class: "text" }, b.text), el("td", {}, el("span", { class: "badge retracted" }, "retracted")), el("td", {})));
+  return el("table", {}, el("tr", {}, el("th", {}, "claim"), el("th", {}, "text"), el("th", {}, "status"), el("th", {}, "fingerprint")), ...rows);
+}
+
+// Metrics: gates + Ours/B0/B1 table (from /api/summary); ablations (from /api/experiments)
+const GATE_TEXT = {
+  G1_recall_improvement: "Does Ours find the right evidence at least as often as the B1 baseline?",
+  G2_early_retrieval: "Did retrieval happen before the user finished speaking?",
+  G3_groundedness_preservation: "Are Ours' answers at least as well supported by evidence as B1's?",
+  G4_grounding: "Are answers grounded, with no citations to evidence that was not retrieved?",
+  G5_late_detail_refinement: "When a detail arrives late, are untouched claims kept byte-identical (no restart)?",
+  G6_trace_coverage: "Is every pipeline stage of every turn visible in the telemetry?",
+};
+const METRIC_TEXT = {
+  "recall@5": "Right evidence in the top 5", "recall@10": "Right evidence in the top 10", early_retrieval_rate: "Retrievals before the user stopped speaking",
+  false_trigger_rate: "Retrievals for turns that needed none", wasted_speculation_rate: "Early retrievals never used", subintent_recall: "Sub-questions answered",
+  sub_intent_recall: "Sub-questions answered (alias)", over_fragmentation: "Questions split into too many parts", suppression_precision: "Correct 'cannot answer' decisions (precision)",
+  suppression_recall: "Unanswerable questions caught (recall)", uncertainty_precision: "Uncertainty flags that were right", uncertainty_recall: "Unanswerable questions flagged uncertain",
+  ttft_p50: "Time to first token, median (ms)", ttft_p95: "Time to first token, 95th pct (ms)", cost_per_turn: "Cost per turn ($)", cache_hit_rate: "Evidence served from cache",
+  hallucinated_id_rate: "Citations to evidence not retrieved", trace_coverage: "Turns with every stage traced", groundedness: "Claims supported by their evidence",
+};
+const LOWER_IS_BETTER = new Set(["false_trigger_rate", "wasted_speculation_rate", "over_fragmentation", "ttft_p50", "ttft_p95", "cost_per_turn", "hallucinated_id_rate"]);
+async function loadMetrics() {
+  try {
+    const [s, x] = await Promise.all([api("/api/summary"), api("/api/experiments")]);
+    setState({ summary: s.ok ? await s.json() : {}, experiments: x.ok ? await x.json() : {} });
+  } catch (err) { setState({ summary: {}, experiments: {} }); }
+}
+RENDER.metrics = () => {
+  for (const b of document.querySelectorAll("[data-sub]")) b.classList.toggle("on", b.getAttribute("data-sub") === AppState.metricsSub);
+  const box = $("metrics");
+  const s = AppState.summary;
+  if (!s) { box.replaceChildren(el("div", { class: "note" }, "Loading…")); return; }
+  if (AppState.metricsSub === "ablations") { box.replaceChildren(renderAblations()); return; }
+  if (!val(s, "gates")) { box.replaceChildren(el("div", { class: "panel" }, "No summary yet: run ", el("code", {}, "slrag replay eval/scenarios/test --mode ours"), " to create out/summary.json.")); return; }
+  const gates = val(s, "gates");
+  const cards = Object.keys(gates).sort().map((name) => {
+    const g = gates[name];
+    const status = val(g, "status");
+    const ours = val(g, "ours");
+    const value = ours !== null && typeof ours === "object"
+      ? el("div", { style: "margin:6px 0" }, ...Object.entries(ours).map(([k, v]) => el("div", {}, `${METRIC_TEXT[k] || k.replace(/_/g, " ")}: `, el("b", { class: "fp", style: "font-size:13px" }, fmt(v)))))
+      : el("div", { class: "v" }, fmt(ours));
+    return el("div", { class: "gcard" }, el("div", { class: "h" }, el("span", {}, name.split("_")[0]), el("span", {}, status === "PASS" ? "✅" : status === "FAIL" ? "❌" : "–")),
+      el("div", { class: "muted" }, GATE_TEXT[name] || name), value, el("div", { class: "note" }, `${val(g, "metric")} · target: ${val(g, "condition")}`));
+  });
+  const ours = val(s, "metrics") || {}; const b0 = val(s, "baseline_metrics.b0") || {}; const b1 = val(s, "baseline_metrics.b1") || {};
+  const keys = Object.keys(METRIC_TEXT).filter((k) => k in ours && k !== "sub_intent_recall");
+  const table = el("table", {}, el("tr", {}, el("th", {}, "metric"), el("th", {}, "Ours"), el("th", {}, "B0 (dense only)"), el("th", {}, "B1 (hybrid, batch)")),
+    ...keys.map((k) => {
+      const o = ours[k], one = b1[k];
+      const better = typeof o === "number" && typeof one === "number" && o !== one ? (LOWER_IS_BETTER.has(k) ? o < one : o > one) : null;
+      return el("tr", {}, el("td", { title: k }, METRIC_TEXT[k]), el("td", { class: `num${better === true ? " win" : better === false ? " lose" : ""}` }, fmt(o)),
+        el("td", { class: "num" }, fmt(b0[k])), el("td", { class: "num" }, fmt(one)));
+    }));
+  box.replaceChildren(el("div", { class: "cards" }, ...cards),
+    el("div", { class: "panel", style: "margin-top:12px" }, el("h3", {}, `Ours vs baselines · ${val(s, "calibration_config.split") || ""} split, ${fmt(val(s, "calibration_config.replayed_scenarios"))} sessions`,
+      el("span", { class: "muted" }, "green: Ours beats B1 · red: Ours loses")), table));
+};
+function renderAblations() {
+  const x = AppState.experiments || {};
+  const exps = val(x, "experiments");
+  if (!exps || !Object.keys(exps).length) return el("div", { class: "panel" }, "No ablation results yet: run ", el("code", {}, "python scripts/run_experiments.py"), " first.");
+  const out = [el("div", { class: "note" }, `Split: ${val(x, "split")} · generated ${val(x, "generated_at") || "–"}`)];
+  for (const name of ["A1", "A2", "A3", "A4", "A5"]) {
+    const e = exps[name];
+    if (!e) { const label = val(x, "not_implemented") ? val(x, "not_implemented")[name] : ""; out.push(el("div", { class: "panel" }, el("h3", {}, `${name} · ${label || ""}`), el("div", { class: "note" }, "Not implemented in this build."))); continue; }
+    if (val(e, "arms")) {
+      const arms = val(e, "arms"); const names = Object.keys(arms);
+      const rows = Object.keys(arms[names[0]] || {}).map((k) => el("tr", {}, el("td", { title: k }, METRIC_TEXT[k] || k.replace(/_/g, " ")), ...names.map((a) => el("td", { class: "num" }, fmt(arms[a][k])))));
+      out.push(el("div", { class: "panel" }, el("h3", {}, `${name} · ${val(e, "label")}`, el("span", { class: "muted" }, val(e, "timing") || "")),
+        el("table", {}, el("tr", {}, el("th", {}, "metric"), ...names.map((a) => el("th", {}, a.replace(/_/g, " ")))), ...rows)));
+    } else {
+      const rows = Object.keys(e).filter((k) => typeof e[k] !== "object" && k !== "label").map((k) => el("tr", {}, el("td", {}, k.replace(/_/g, " ")), el("td", { class: "num" }, fmt(e[k]))));
+      out.push(el("div", { class: "panel" }, el("h3", {}, `${name} · ${val(e, "label")}`), el("table", {}, ...rows)));
+    }
+  }
+  return el("div", {}, ...out);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Drawer
+async function openChunk(id, claimText, score) {
+  $("drawerTitle").textContent = id;
+  $("drawerMeta").textContent = "Loading…";
+  $("drawerText").textContent = "";
+  $("drawer").classList.add("open");
+  const c = await chunk(id);
+  if (!c) { $("drawerMeta").textContent = "Chunk text not available."; return; }
+  const meta = [el("div", {}, el("b", {}, val(c, "section")), " · ", val(c, "doc_id"))];
+  if (score !== undefined && score !== null) meta.push(el("div", {}, `retrieval score ${fmt(score, 4)}`));
+  $("drawerMeta").replaceChildren(...meta);
+  const words = new Set(((claimText || "").toLowerCase().match(/[a-z0-9]+/g) || []));
+  const sentences = (val(c, "text") || "").split(/(?<=[.!?])\s+/);
+  let best = -1, bestN = 0;
+  sentences.forEach((s, i) => { const n = (s.toLowerCase().match(/[a-z0-9]+/g) || []).filter((w) => words.has(w)).length; if (n > bestN) { bestN = n; best = i; } });
+  $("drawerText").replaceChildren(...sentences.flatMap((s, i) => [i === best ? el("mark", {}, s) : s, " "]));
+}
+function closeDrawer() { $("drawer").classList.remove("open"); }
+
+// ---------------------------------------------------------------------------------------------
+// Actions
+async function loadScenarios() {
+  try { const r = await api("/api/scenarios"); if (r.ok) setState({ scenarios: await r.json() }); }
+  catch (err) { /* banner already shown */ }
+}
+async function runSelected() {
+  const id = AppState.selected;
+  if (!id || AppState.running) { if (!id) setState({ pickerOpen: true }); return; }
+  if (document.activeElement && typing(document.activeElement)) document.activeElement.blur();  // shortcuts work again
+  try {
+    const r = await api("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenario_id: id, speed: 1 }) });
+    if (!r.ok) { showBanner(`Run failed (HTTP ${r.status})`); return; }
+    const run = await r.json();
+    const entry = { at: Date.now(), scenario: id, session: val(run, "session_id"), g2: val(run, "metrics.g2_pass"), groundedness: val(run, "metrics.groundedness") };
+    setState({ running: { session: val(run, "session_id"), scenario: id, turns: (val(run, "turn_ids") || []).length || 1, entry },
+               session: val(run, "session_id"), turn: "", version: null, b1: [], follow: true, progress: "Starting…", tab: AppState.tab === "metrics" || AppState.tab === "help" ? "transcript" : AppState.tab });
+  } catch (err) { /* banner already shown */ }
+}
+function finishRun() {
+  const entry = AppState.running && AppState.running.entry;
+  const history = entry ? [entry].concat(AppState.history).slice(0, 10) : AppState.history;
+  try { localStorage.setItem("slrag-history", JSON.stringify(history)); } catch (err) { /* storage blocked */ }
+  setState({ running: null, progress: "", history });
+}
+async function openSession(id) {
+  if (AppState.events.some((ev) => sessionOf(ev) === id)) { setState({ session: id, turn: "", version: null, follow: false }); return; }
+  try {
+    const r = await api(`/api/session/${encodeURIComponent(id)}`);
+    if (!r.ok) { showBanner(`Session ${id} is not in the server's telemetry log`); return; }
+    const events = parseJsonl(await r.text());
+    setState({ events: AppState.events.concat(events), session: id, turn: "", version: null, follow: false });
+  } catch (err) { /* banner shown */ }
+}
+async function loadB1() {
+  const sid = AppState.running ? AppState.running.scenario : (AppState.history.find((h) => h.session === AppState.session) || {}).scenario || AppState.selected;
+  if (!sid) { showBanner("Run a scenario first, then load its B1 baseline"); return; }
+  try {
+    const r = await api("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenario_id: sid, mode: "b1", playback: false, return_events: true }) });
+    if (!r.ok) { showBanner(`B1 baseline failed (HTTP ${r.status})`); return; }
+    const run = await r.json();
+    setState({ b1: val(run, "event_list") || [] });
+  } catch (err) { /* banner shown */ }
+}
+function download() {
+  const events = sessionEvents();
+  if (!events.length) { showBanner("Nothing to download yet"); return; }
+  const blob = new Blob([events.map((e) => JSON.stringify(e)).join("\n") + "\n"], { type: "application/x-ndjson" });
+  const a = el("a", { href: URL.createObjectURL(blob), download: `${AppState.session || "trace"}.jsonl` });
+  document.body.append(a); a.click(); a.remove();
+}
+async function copyLink() {
+  if (!AppState.session) { showBanner("No session to link to yet"); return; }
+  const link = `${location.origin}${location.pathname}?session=${encodeURIComponent(AppState.session)}`;
+  try { await navigator.clipboard.writeText(link); showBanner(`Link copied: ${link}`, true); }
+  catch (err) { showBanner(`Copy this link: ${link}`, true); }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Voice input (Web Speech API -> /ws/stream). Final speech results are sent as transcript chunks;
+// 2.5 s without a result ends the utterance. The answer arrives on /ws/telemetry like any other turn.
+const Voice = { rec: null, active: false, ws: null, session: "", seq: 0, t0: 0, silence: 0, sentSinceEnd: 0 };
+const SILENCE_MS = 2500;
+function setVoice(patch) { setState({ voice: Object.assign({}, AppState.voice, patch) }); }
+RENDER.voice = () => {
+  const v = AppState.voice;
+  const btn = $("micBtn");
+  btn.classList.toggle("listening", v.state === "listening");
+  btn.classList.toggle("processing", v.state === "processing");
+  btn.textContent = v.state === "listening" ? "🎤 Listening…" : v.state === "processing" ? "⏳ Processing…" : "🎤 Voice";
+  $("voicePanel").classList.toggle("show", v.state !== "idle");
+  $("voiceLabel").textContent = v.state === "processing" ? "Answering:" : "You said:";
+  $("voiceFinal").textContent = v.finals.join(" ");
+  $("voiceInterim").textContent = v.interim ? ` ${v.interim}` : "";
+};
+function toggleMic() { if (Voice.active) stopMic(); else startMic(); }
+function voiceSocketOpen() { return Voice.ws && Voice.ws.readyState === WebSocket.OPEN; }
+function sendVoice(message) {
+  if (!voiceSocketOpen()) { showBanner("Voice input lost its connection to /ws/stream — click 🎤 to reconnect"); return false; }
+  // The gateway reads event_type and orders chunks by seq; ts_s is seconds from the start of the stream.
+  Voice.seq += 1;
+  Voice.ws.send(JSON.stringify(Object.assign({ seq: Voice.seq, ts_s: (Date.now() - Voice.t0) / 1000, session_id: Voice.session }, message)));
+  return true;
+}
+function startMic() {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) { showBanner("Voice input requires Chrome or Edge — use text input instead"); return; }
+  const begin = () => {
+    const rec = new Recognition();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+    rec.onresult = (e) => {
+      clearTimeout(Voice.silence);
+      Voice.silence = setTimeout(endUtterance, SILENCE_MS);
+      let interim = "";
+      const finals = [];
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const result = e.results[i];
+        if (result.isFinal) finals.push(result[0].transcript.trim());
+        else interim += result[0].transcript;
+      }
+      for (const text of finals.filter(Boolean)) sendChunk(text);
+      setVoice({ interim, state: AppState.voice.state === "processing" ? "processing" : "listening" });
+    };
+    rec.onerror = (e) => {
+      if (e.error === "no-speech" || e.error === "aborted") return;
+      showBanner(e.error === "not-allowed" || e.error === "service-not-allowed" ? "Microphone access was blocked — allow it in the browser to use voice input"
+        : `Voice input error: ${e.error}`);
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") stopMic();
+    };
+    rec.onend = () => { if (Voice.active) { try { rec.start(); } catch (err) { /* already restarting */ } } };  // auto-restart after silence
+    Voice.rec = rec;
+    Voice.active = true;
+    try { rec.start(); } catch (err) { showBanner(`Could not start the microphone: ${err.message}`); Voice.active = false; return; }
+    setVoice({ state: "listening", interim: "", finals: [] });
+  };
+  if (voiceSocketOpen()) { setState({ session: Voice.session, turn: "", follow: false }); begin(); return; }  // reuse the voice session
+  Voice.session = `ui_voice_${Math.random().toString(16).slice(2, 8)}`;
+  Voice.seq = 0; Voice.t0 = Date.now(); Voice.sentSinceEnd = 0;
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/stream?session_id=${Voice.session}`);
+  ws.onopen = () => { Voice.ws = ws; setState({ session: Voice.session, turn: "", version: null, follow: false }); begin(); };
+  ws.onerror = () => showBanner("Could not open /ws/stream for voice input — is the server running?");
+  ws.onclose = () => { if (Voice.active) { showBanner("Voice connection closed"); stopMic(); } Voice.ws = null; };
+  ws.onmessage = () => { /* answers are read from /ws/telemetry */ };
+}
+function sendChunk(text) {
+  if (!sendVoice({ event_type: "transcript_chunk", type: "transcript_chunk", text })) return;
+  Voice.sentSinceEnd += 1;
+  setState({ voiceChunks: AppState.voiceChunks.concat([{ session: Voice.session, seq: Voice.seq, text }]) });
+  setVoice({ finals: AppState.voice.finals.concat([text]) });
+}
+function endUtterance() {
+  clearTimeout(Voice.silence);
+  if (!Voice.sentSinceEnd) return;  // nothing new was said: no empty turn
+  if (!sendVoice({ event_type: "utterance_end", type: "utterance_end" })) return;
+  Voice.sentSinceEnd = 0;
+  setVoice({ state: "processing", interim: "", finals: [] });
+}
+function stopMic() {
+  Voice.active = false;
+  clearTimeout(Voice.silence);
+  if (Voice.rec) { try { Voice.rec.stop(); } catch (err) { /* already stopped */ } }
+  if (Voice.sentSinceEnd) endUtterance();  // finish what was said instead of dropping it
+  else setVoice({ state: AppState.voice.state === "processing" ? "processing" : "idle", interim: "" });
+}
+
+// ---------------------------------------------------------------------------------------------
+// Help (static)
+function renderHelp() {
+  const chip = (k, c) => el("span", { class: `chip ${c}` }, k);
+  $("help").replaceChildren(
+    el("h3", {}, "About this trace"),
+    el("p", {}, "SL-RAG answers spoken questions while they are still being spoken: a controller decides, chunk by chunk, when to retrieve evidence early, and every answer is a set of claims that each cite the evidence they come from. A fail-closed verifier drops any claim its evidence does not support, and later details refine the existing answer instead of restarting it. This page shows only what the engine logs to its telemetry stream, so everything you see here is also in the trace file."),
+    el("h4", {}, "Tabs"),
+    el("ul", {}, el("li", {}, el("b", {}, "Transcript"), " — the utterance chunk by chunk, with the controller's decision on each chunk."),
+      el("li", {}, el("b", {}, "Retrieval"), " — when each retrieval ran (fresh or from cache), relative to the end of the utterance, and the evidence per sub-question."),
+      el("li", {}, el("b", {}, "Answer"), " — the cited claims in the order they were streamed; click a citation to read the source."),
+      el("li", {}, el("b", {}, "Ledger"), " — every answer version, and a compare view showing what a follow-up added, revised or kept."),
+      el("li", {}, el("b", {}, "Metrics"), " — the evaluation gates G1–G6, Ours vs baselines, and ablation experiments."),
+      el("li", {}, el("b", {}, "Help"), " — this page.")),
+    el("h4", {}, "Gates"),
+    el("ul", {}, ...Object.entries(GATE_TEXT).map(([k, v]) => el("li", {}, el("b", {}, k.split("_")[0]), " — ", v))),
+    el("h4", {}, "Decision chips"),
+    el("ul", {}, el("li", {}, chip("WAIT", "WAIT"), " not enough to retrieve yet"), el("li", {}, chip("PROVISIONAL", "PROVISIONAL"), " retrieve early while the user is still speaking"),
+      el("li", {}, chip("COMMIT", "COMMIT"), " the question has settled: final retrieval"), el("li", {}, chip("SUPPRESS", "SUPPRESS"), " a presentation request: answer from the ledger, no retrieval"),
+      el("li", {}, chip("REDONE", "RECONCILE"), " / ", chip("STANDS", "RECONCILE"), " how the draft prepared at commit time was reconciled with the final evidence"),
+      el("li", {}, el("span", { class: "tier" }, "T0"), " presentation rules · ", el("span", { class: "tier" }, "T1"), " slot and drift rules · ", el("span", { class: "tier" }, "T2"), " LLM classifier")),
+    el("h4", {}, "Voice input"),
+    el("ul", {}, el("li", {}, "Click 🎤 to speak. The system retrieves and starts answering while you're still talking."),
+      el("li", {}, "Click 🎤 again to stop listening."),
+      el("li", {}, "Requires Chrome or Edge (uses the Web Speech API). The browser sends your audio to its speech service (Google for Chrome, Microsoft for Edge) to transcribe it."),
+      el("li", {}, "A 2.5 s pause in speech triggers answer generation automatically."),
+      el("li", {}, "Each voice session is a live gateway session: a follow-up refines that session's answer.")),
+    el("h4", {}, "Keyboard shortcuts"),
+    el("ul", {}, el("li", {}, el("kbd", {}, "1"), "–", el("kbd", {}, "6"), " switch tabs"), el("li", {}, el("kbd", {}, "R"), " run the selected scenario"),
+      el("li", {}, el("kbd", {}, "M"), " start / stop the microphone"),
+      el("li", {}, el("kbd", {}, "S"), " open the scenario picker"), el("li", {}, el("kbd", {}, "Esc"), " close the citation drawer"),
+      el("li", {}, el("kbd", {}, "←"), " ", el("kbd", {}, "→"), " previous / next ledger version"), el("li", {}, el("kbd", {}, "?"), " this help")));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Wiring
+$("micBtn").addEventListener("click", toggleMic);
+$("themeBtn").addEventListener("click", () => setState({ theme: AppState.theme === "dark" ? "light" : "dark" }));
+$("downloadBtn").addEventListener("click", download);
+$("linkBtn").addEventListener("click", copyLink);
+$("helpBtn").addEventListener("click", () => setState({ tab: "help" }));
+$("bannerClose").addEventListener("click", () => setState({ banner: null }));
+$("reloadBtn").addEventListener("click", () => location.reload());
+$("newRunBtn").addEventListener("click", () => { setState({ pickerOpen: !AppState.pickerOpen }); setTimeout(() => $("search").focus(), 0); });
+$("emptyRun").addEventListener("click", () => { setState({ pickerOpen: true, collapsed: false }); setTimeout(() => $("search").focus(), 0); });
+$("runBtn").addEventListener("click", runSelected);
+$("runIcon").addEventListener("click", runSelected);
+$("collapseBtn").addEventListener("click", () => setState({ collapsed: true }));
+$("expandBtn").addEventListener("click", () => setState({ collapsed: false }));
+$("search").addEventListener("input", (e) => setState({ search: e.target.value }));
+$("b1Btn").addEventListener("click", loadB1);
+$("legendBtn").addEventListener("click", () => setState({ legendOpen: !AppState.legendOpen }));
+$("compareToggle").addEventListener("change", (e) => setState({ compare: e.target.checked }));
+$("drawerClose").addEventListener("click", closeDrawer);
+for (const b of document.querySelectorAll("[data-sub]")) b.addEventListener("click", () => setState({ metricsSub: b.getAttribute("data-sub") }));
+document.addEventListener("click", (e) => {
+  if ($("drawer").classList.contains("open") && !$("drawer").contains(e.target) && !e.target.classList.contains("cite")) closeDrawer();
+});
+function typing(target) {
+  // Shortcuts are off only while typing text (a focused checkbox or button must not swallow them).
+  return (target.tagName === "INPUT" && /^(text|search|email|password|number|url)$/i.test(target.type || "text"))
+    || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable;
+}
+$("search").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const first = document.querySelector("#scenarios .scn");
+    if (!AppState.selected && first) setState({ selected: first.firstChild.textContent });
+    runSelected();
+  } else if (e.key === "Escape") { e.target.blur(); }
+});
+document.addEventListener("keydown", (e) => {
+  if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if (k >= "1" && k <= "6") setState({ tab: TABS[Number(k) - 1] });
+  else if (k === "r" || k === "R") runSelected();
+  else if (k === "m" || k === "M") toggleMic();
+  else if (k === "s" || k === "S") { e.preventDefault(); setState({ pickerOpen: true, collapsed: false }); setTimeout(() => $("search").focus(), 0); }
+  else if (k === "Escape") { closeDrawer(); hidePop(); }
+  else if (k === "?") setState({ tab: "help" });
+  else if ((k === "ArrowLeft" || k === "ArrowRight") && AppState.tab === "ledger") {
+    const labels = ledgerVersions(sessionEvents()).map((v) => v.v);
+    if (!labels.length) return;
+    const i = Math.max(0, labels.indexOf(AppState.version === null ? labels[labels.length - 1] : AppState.version));
+    setState({ version: labels[Math.min(labels.length - 1, Math.max(0, i + (k === "ArrowRight" ? 1 : -1)))] });
+  }
+});
+let dragDepth = 0;
+document.addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; $("dropzone").classList.add("show"); });
+document.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; $("dropzone").classList.remove("show"); } });
+document.addEventListener("dragover", (e) => e.preventDefault());
+document.addEventListener("drop", async (e) => {
+  e.preventDefault(); dragDepth = 0; $("dropzone").classList.remove("show");
+  const file = e.dataTransfer && e.dataTransfer.files[0];
+  if (!file) return;
+  try { loadEvents(parseJsonl(await file.text()), file.name); } catch (err) { showBanner(`Could not read ${file.name}: ${err.message}`); }
+});
+
+(function init() {
+  let theme = "light", history = [];
+  try { theme = localStorage.getItem("slrag-theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch (err) { /* storage blocked */ }
+  try { history = JSON.parse(localStorage.getItem("slrag-history") || "[]"); } catch (err) { history = []; }
+  renderHelp();
+  setState({ theme, history, tab: "transcript", legendOpen: false, collapsed: false, banner: null });
+  dirty.add("sidebar"); dirty.add("progress"); dirty.add("runbar"); dirty.add("legend"); dirty.add("metrics");
+  const session = new URLSearchParams(location.search).get("session");
+  if (session) openSession(session);
+  connect();
+  loadScenarios();
+})();
+</script>
+</body>
+</html>

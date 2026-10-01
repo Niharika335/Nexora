@@ -1,0 +1,16 @@
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+.pytest_cache
+eval
+tests
+docs
+out
+prompts
+scripts
+!scripts/fetch_models.py
+models
+bin
+telemetry.jsonl
+*.log

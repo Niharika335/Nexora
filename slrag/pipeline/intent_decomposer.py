@@ -1,58 +1,51 @@
-"""Phase 5 Multi-Intent Decomposition and Context Injection."""
+"""Multi-intent decomposition: runs the query planner and publishes the resulting sub-intents."""
 from __future__ import annotations
 
 import re
 from typing import Any, Dict, List, Optional
+
 from slrag.contracts.events import SubIntentDecompositionEvent
+from slrag.plan.planner import Plan, QueryPlanner
+
+DEPENDENCY_CUE_RE = re.compile(r"^\s*(?:then|after that|based on that|using that)\b", re.IGNORECASE)
 
 
 class IntentDecomposer:
-    def __init__(self, bus: Optional[Any] = None, clock: Optional[Any] = None):
+    def __init__(self, bus: Optional[Any] = None, clock: Optional[Any] = None, planner: Optional[QueryPlanner] = None):
         self.bus = bus
         self.clock = clock
+        self.planner = planner or QueryPlanner()
+        self.last_plan: Optional[Plan] = None
 
     def decompose(self, query: str, turn_id: str = "") -> List[Dict[str, Any]]:
-        cleaned = query.strip()
-        conjunctive_patterns = [r"\s+and\s+", r"\s+while\s+", r"\s+as well as\s+", r";", r"\.\s+"]
+        """Synchronous decomposition (no LLM call: gate -> fallback splitter -> post-processing)."""
+        return self._publish(query, turn_id, self.planner.plan_sync(query))
 
-        splits = [cleaned]
-        for pattern in conjunctive_patterns:
-            new_splits = []
-            for part in splits:
-                parts = re.split(pattern, part, flags=re.IGNORECASE)
-                new_splits.extend([p.strip() for p in parts if p.strip()])
-            splits = new_splits
+    async def adecompose(self, query: str, turn_id: str = "", id_offset: int = 0) -> List[Dict[str, Any]]:
+        """Decomposition with the LLM planner (1.5 s timeout, fallback on timeout / invalid JSON).
 
-        is_compound = len(splits) > 1
-        sub_intents = []
+        `id_offset` numbers the sub-intents after ones already in the session (sub_{offset+1}, ...)."""
+        return self._publish(query, turn_id, await self.planner.plan(query), id_offset)
 
-        primary_subject = ""
-        words = splits[0].split()
-        if len(words) > 2:
-            primary_subject = " ".join(words[1:3])
-
-        for idx, part in enumerate(splits):
-            sub_id = f"sub_{idx + 1}"
-            resolved_query = part
-            if idx > 0 and primary_subject and not any(w in part.lower() for w in primary_subject.lower().split()):
-                resolved_query = f"{part} (regarding {primary_subject})"
-
-            sub_intents.append({
-                "sub_intent_id": sub_id,
-                "text": resolved_query,
-                "depends_on": [] if idx == 0 else [f"sub_{idx}"] if "then" in part.lower() else []
-            })
+    def _publish(self, query: str, turn_id: str, plan: Plan, id_offset: int = 0) -> List[Dict[str, Any]]:
+        self.last_plan = plan
+        sub_intents: List[Dict[str, Any]] = []
+        for idx, sq in enumerate(plan.sub_queries):
+            depends_on = [sub_intents[idx - 1]["sub_intent_id"]] if idx > 0 and DEPENDENCY_CUE_RE.match(sq.text) else []
+            sub_intents.append({"sub_intent_id": f"sub_{id_offset + idx + 1}", "text": sq.text, "depends_on": depends_on})
 
         if self.bus:
-            ts = self.clock.time() if self.clock else None
             kw: Dict[str, Any] = {
                 "turn_id": turn_id,
                 "query": query,
                 "sub_intents": sub_intents,
-                "is_compound": is_compound
+                "is_compound": len(sub_intents) > 1,
+                "source": plan.source,
+                "merged": plan.merged,
+                "dropped": plan.dropped,
+                "gate_reasons": plan.gate_reasons,
             }
-            if ts is not None:
-                kw["timestamp"] = ts
+            if self.clock:
+                kw["timestamp"] = self.clock.time()
             self.bus.publish(SubIntentDecompositionEvent(**kw))
-
         return sub_intents

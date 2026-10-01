@@ -55,22 +55,22 @@ class SufficiencyGate:
         retrieved_texts = [r.text for r in results[:3]]
         coverage_score = compute_query_coverage(query, retrieved_texts)
 
-        dense_pass = dense_top1_score >= self.config.dense_top1_threshold
-        coverage_pass = coverage_score >= self.config.coverage_threshold
+        dense_pass = dense_top1_score >= self.config.dense_top1
+        coverage_pass = coverage_score >= self.config.coverage
 
         if dense_pass and coverage_pass:
             return (
                 True,
                 dense_top1_score,
                 coverage_score,
-                f"Sufficient: dense_top1={dense_top1_score:.3f} >= {self.config.dense_top1_threshold}, coverage={coverage_score:.3f} >= {self.config.coverage_threshold}",
+                f"Sufficient: dense_top1={dense_top1_score:.3f} >= {self.config.dense_top1}, coverage={coverage_score:.3f} >= {self.config.coverage}",
             )
         else:
             reasons = []
             if not dense_pass:
-                reasons.append(f"dense_top1={dense_top1_score:.3f} < {self.config.dense_top1_threshold}")
+                reasons.append(f"dense_top1={dense_top1_score:.3f} < {self.config.dense_top1}")
             if not coverage_pass:
-                reasons.append(f"coverage={coverage_score:.3f} < {self.config.coverage_threshold}")
+                reasons.append(f"coverage={coverage_score:.3f} < {self.config.coverage}")
             return False, dense_top1_score, coverage_score, f"Insufficient context: {', '.join(reasons)}"
 
     async def evaluate_and_emit(
@@ -94,6 +94,7 @@ class SufficiencyGate:
             coverage_score=round(coverage, 4),
             passed=passed,
             reason=reason,
+            thresholds={"dense_top1": self.config.dense_top1, "coverage": self.config.coverage},
         )
         await telemetry_bus.emit(event)
         return passed, dense_score, coverage, reason

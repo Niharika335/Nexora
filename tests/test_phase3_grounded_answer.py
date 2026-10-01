@@ -118,8 +118,8 @@ def test_claim_ledger_versioning_and_isolation():
     assert len(ledger.get_verified_claims()) == 0
 
     # Turn 1
-    c1 = Claim(claim_id="c1", text="Raft has 3 node states.", doc_ids=["DOC002§raft_consensus"], status=ClaimStatus.VERIFIED)
-    c2 = Claim(claim_id="c2", text="Raft tolerates 2 failures with 5 nodes.", doc_ids=["DOC002§raft_consensus"], status=ClaimStatus.VERIFIED)
+    c1 = Claim(claim_id="c1", text="Raft has 3 node states.", doc_ids=["DOC002§raft_consensus"], verification_status=ClaimStatus.VERIFIED)
+    c2 = Claim(claim_id="c2", text="Raft tolerates 2 failures with 5 nodes.", doc_ids=["DOC002§raft_consensus"], verification_status=ClaimStatus.VERIFIED)
     
     v1 = ledger.add_verified_claims([c1, c2], turn_id="turn_1")
     assert v1 == 2
@@ -127,7 +127,7 @@ def test_claim_ledger_versioning_and_isolation():
     assert len(ledger.get_verified_claims()) == 2
 
     # Turn 2
-    c3 = Claim(claim_id="c3", text="Leader replicates log entries across quorum.", doc_ids=["DOC002§raft_consensus"], status=ClaimStatus.VERIFIED)
+    c3 = Claim(claim_id="c3", text="Leader replicates log entries across quorum.", doc_ids=["DOC002§raft_consensus"], verification_status=ClaimStatus.VERIFIED)
     v2 = ledger.add_verified_claims([c3], turn_id="turn_2")
     assert v2 == 3
     assert ledger.version == 3
@@ -178,13 +178,13 @@ async def test_acceptance_scenario_3_claims_1_rejected(retrieval_engine):
     res3, p3 = await engine.verifier.verify_and_emit(claim3_unsupported, retrieval_engine.chunks_map, allowed_ids, ledger.get_verified_claims(), turn_id)
 
     assert p1 is True
-    assert res1.status == ClaimStatus.VERIFIED
+    assert res1.verification_status == ClaimStatus.VERIFIED
 
     assert p2 is True
-    assert res2.status == ClaimStatus.VERIFIED
+    assert res2.verification_status == ClaimStatus.VERIFIED
 
     assert p3 is False
-    assert res3.status == ClaimStatus.REJECTED
+    assert res3.verification_status == ClaimStatus.REJECTED
 
     # Add verified to ledger
     ledger.add_verified_claims([res1, res2, res3], turn_id=turn_id)

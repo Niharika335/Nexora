@@ -1,0 +1,149 @@
+# SL-RAG runtime configuration. Loaded by slrag.config.load_config() into DEFAULT_CONFIG
+# (override the path with $SLRAG_CONFIG). cfg_hash is the hash of these effective values and
+# is stamped on every telemetry event; unknown sections or keys are rejected at load time.
+
+chunker:
+  min_tokens: 300
+  max_tokens: 500
+  overlap_tokens: 50
+  approx_chars_per_token: 4.0
+
+bm25:
+  k1: 1.5
+  b: 0.75
+  epsilon: 0.25
+
+dense:
+  model_name: sentence-transformers/all-MiniLM-L6-v2   # downloaded into models/ by scripts/fetch_models.py
+  embedding_dim: 384
+  normalize_embeddings: true
+  batch_size: 32
+
+rrf:
+  k: 60
+  weight_bm25: 0.5
+  weight_dense: 0.5
+
+# Sufficiency gate: answerable iff dense_top1 >= dense_top1 AND coverage >= coverage. dense_top1 is the
+# retrieval model's cosine mapped to [0, 1]. Calibrated on the tune split with all-MiniLM-L6-v2
+# (scripts/calibrate_uncertainty.py, objective: F1 of the uncertainty flag): dense_top1 0.55 and an empty
+# uncertain band give P = R = 1.0 on tune; raising dense_top1 suppresses answerable sub-intents.
+sufficiency:
+  dense_top1: 0.55
+  coverage: 0.50
+  uncertain_low: 0.50     # answered but flagged uncertain when coverage is in [uncertain_low, uncertain_high)
+  uncertain_high: 0.50    # calibrated on tune (scripts/calibrate_uncertainty.py): an empty band maximizes F1
+
+# Fail-closed verifier thresholds. The semantic check compares hashed n-gram vectors (surface overlap,
+# slrag.retrieval.dense.generate_bge_small_embedding), not the retrieval model; these values are calibrated on it.
+verifier:
+  lexical: 0.30
+  semantic: 0.65
+  coreference_check_enabled: true
+  hallucinated_id_check_enabled: true
+  consistency_check_enabled: true
+
+# LLM backend. heuristic (default): deterministic stand-ins, no model or server needed (tests and CI).
+# ollama: set backend: ollama and run `ollama serve` + `ollama pull qwen2.5:3b`; the grounded drafter and
+# the delta planner / rewriter then call Ollama, falling back to the heuristic path if it is unreachable.
+llm:
+  backend: heuristic
+  ollama_url: http://localhost:11434
+  model: qwen2.5:3b
+  timeout_s: 10.0
+  model_name: Qwen/Qwen2.5-3B-Instruct
+  cost_per_1k_input: 0.00015
+  cost_per_1k_output: 0.0006
+  temperature: 0.1
+  max_tokens: 512
+
+telemetry:
+  jsonl_log_path: telemetry.jsonl
+  buffer_size: 20000
+  drain_timeout_sec: 5.0
+
+session:
+  idle_timeout_seconds: 1800.0
+  cleanup_interval_seconds: 60.0
+
+# Token-level cascade trigger (slrag.pipeline.cascade).
+cascade:
+  enabled: true
+  confidence_threshold: 0.72
+  entropy_threshold: 0.38
+  min_token_boundary: 4
+  cache_ttl_ms: 5000
+  cache_max_size: 128
+
+multi_intent:
+  enabled: true
+  suppression_threshold: 0.45
+  enable_parallel_retrieval: true
+  restart_on_late_detail: false
+
+# Streaming retrieval controller. mode: cascade | rules_only | llm_only | eager | batch
+controller:
+  mode: cascade
+  min_content_tokens: 4
+  # recalibrated with the all-MiniLM-L6-v2 retriever (tune split only, seed 13; scripts/calibrate.py --split tune;
+  # grid new_info_cos {0.74,0.78,0.82,0.86} x stable_cos {0.78,0.82,0.85,0.88}; rule: false_trigger_rate == 0,
+  # then max early_retrieval_rate). Every point reaches G2 on tune (0.962-0.983); unchanged choice (0.86, 0.82):
+  # tune early 0.9826, false_trigger 0.0000, wasted 0.2348, recall@10 1.0000, ttft_p50 388 ms.
+  new_info_cos: 0.86      # PROVISIONAL when cos(Q_t, last dispatched) < new_info_cos
+  stable_cos: 0.82        # COMMIT when Q_t is stable for stable_chunks chunks
+  stable_chunks: 2
+  max_provisional: 2
+  max_commit: 1
+  t0_suppress: 0.70
+  t0_continue: 0.40
+  t2_timeout_s: 0.4
+  # Multi-intent turns: when a clause ends (? or . in the chunk, or 2 chunks without new content words),
+  # retrieve every completed sub-query not yet covered, before utterance_end. COMMIT is unchanged.
+  per_clause_retrieval: true
+
+# Evidence cache reuse: cos >= reuse_cos and no slot conflict.
+cache:
+  reuse_cos: 0.82
+
+planner:
+  timeout_s: 1.5
+  max_sub_queries: 4
+  merge_cos: 0.92
+  min_content_tokens: 3
+  quota_per_subquery: 4
+  quota_global: 12
+
+# Phase 7 late-detail refinement: a later turn that adds a constraint is planned as a delta
+# (modifies | adds | unrelated); only the affected sub-intents' claims are rewritten.
+refinement:
+  enabled: true
+  planner_timeout_s: 1.5
+  rewriter_timeout_s: 1.5
+  max_delta_queries: 2
+  max_new_claims: 3
+  evidence_per_sub_intent: 4
+  strict_preservation: false
+
+# Phase 8 speculation (A3 arms). mode: off | retrieval_only | full. predraft: at COMMIT, draft and
+# verify in the background on the commit-time evidence; reconcile at utterance_end
+# (stands | refined | redone). predraft: false never launches the task (drafting at utterance_end).
+speculation:
+  mode: full
+  provisional: true
+  predraft: true
+  predraft_timeout_s: 2.0
+  refine_max_new_chunks: 2
+  draft_concurrency: 3
+
+# Trace UI (/ui/*) and API (/api/*) HTTP Basic credentials; /ws/* is not protected.
+# Override with the SLRAG_UI_USERNAME / SLRAG_UI_PASSWORD environment variables rather than
+# committing real credentials here.
+ui:
+  username: admin
+  password: slrag
+
+
+# Frozen for the final evaluation (Phase 10): every number in docs/ and out/final_experiments.json was
+# measured with these values. Do not change a threshold without re-calibrating on the tune split and
+# re-running the whole final experiment. tests/test_config_freeze.py pins the resulting cfg_hash.
+frozen: true

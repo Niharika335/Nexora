@@ -1,8 +1,15 @@
-"""Dense embedding index using 384-dim normalized representations (BAAI/bge-small compatible)."""
+"""Dense retrieval: sentence-transformers embeddings (config dense.model_name, all-MiniLM-L6-v2 by
+default) with cosine similarity, plus the hashed n-gram vector used for fast lexical similarity.
 
+The model is loaded from models/ with local_files_only=True: no network call at run time.
+Download it once with `python scripts/fetch_models.py`.
+"""
+
+from functools import lru_cache
 import hashlib
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
@@ -12,12 +19,47 @@ from slrag.corpus.models import Chunk
 
 logger = logging.getLogger(__name__)
 
+MODEL_DIR = Path(os.environ.get("SLRAG_MODEL_DIR") or Path(__file__).resolve().parents[2] / "models")
+
+
+@lru_cache(maxsize=4)
+def load_model(model_name: str) -> Any:
+    """The sentence-transformers model, from the local cache only (one instance per process)."""
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError as exc:  # pragma: no cover - dependency is declared in pyproject.toml
+        raise RuntimeError("sentence-transformers is not installed: pip install -e .") from exc
+    try:
+        return SentenceTransformer(model_name, cache_folder=str(MODEL_DIR), device="cpu", local_files_only=True)
+    except Exception as exc:
+        raise RuntimeError(f"Dense model '{model_name}' not found in {MODEL_DIR}: run python scripts/fetch_models.py") from exc
+
+
+_TEXT_CACHE: Dict[Tuple[str, str], np.ndarray] = {}
+
+
+def encode(texts: List[str], model_name: str, batch_size: int = 32) -> np.ndarray:
+    """Unit-normalized embeddings, one row per text (memoized per process: the same corpus is
+    re-indexed by every replay arm and test)."""
+    missing = list(dict.fromkeys(t for t in texts if (model_name, t) not in _TEXT_CACHE))
+    if missing:
+        vecs = load_model(model_name).encode(missing, batch_size=batch_size, normalize_embeddings=True,
+                                             convert_to_numpy=True, show_progress_bar=False)
+        for text, vec in zip(missing, np.asarray(vecs, dtype=np.float32)):
+            _TEXT_CACHE[(model_name, text)] = vec
+    return np.stack([_TEXT_CACHE[(model_name, t)] for t in texts]) if texts else np.empty((0, 0), dtype=np.float32)
+
+
+@lru_cache(maxsize=4096)
+def _encode_query(text: str, model_name: str) -> np.ndarray:
+    return encode([text], model_name)[0]
+
 
 def generate_bge_small_embedding(text: str, dim: int = 384) -> np.ndarray:
-    """Generate high-fidelity deterministic normalized embedding for BAAI/bge-small representation.
-    
-    Uses character and word n-gram projection with positional weighting into 384 dimensions,
-    normalized to unit L2 sphere so cosine similarity is simply the dot product.
+    """Hashed n-gram vector (word unigrams, bigrams, character trigrams) projected into `dim`
+    dimensions and L2-normalized. Not a learned embedding: it measures surface overlap. The
+    controller, evidence cache and verifier use it for query-stability and overlap checks; their
+    thresholds are calibrated on it. Retrieval uses DenseIndex (sentence-transformers) instead.
     """
     if not text or not text.strip():
         return np.zeros(dim, dtype=np.float32)
@@ -62,25 +104,19 @@ class DenseIndex:
         self.dim = config.embedding_dim
 
     def fit(self, chunks: List[Chunk]) -> "DenseIndex":
-        """Compute embeddings for all chunks."""
+        """Encode every chunk ("section title: text") with the sentence-transformers model."""
         self.doc_ids = [c.chunk_id for c in chunks]
         if not chunks:
             self.embeddings = np.empty((0, self.dim), dtype=np.float32)
             return self
-
-        matrix = np.zeros((len(chunks), self.dim), dtype=np.float32)
-        for i, chunk in enumerate(chunks):
-            # Prepend title to chunk text for enhanced retrieval context (BGE style)
-            embed_text = f"Represent this document for retrieval: {chunk.section_title}: {chunk.text}"
-            matrix[i] = generate_bge_small_embedding(embed_text, dim=self.dim)
-
-        self.embeddings = matrix
+        texts = [f"{chunk.section_title}: {chunk.text}" for chunk in chunks]
+        self.embeddings = encode(texts, self.config.model_name, self.config.batch_size)
+        self.dim = int(self.embeddings.shape[1])
         return self
 
     def embed_query(self, query: str) -> np.ndarray:
-        """Embed a query with BGE query instruction prefix."""
-        query_text = f"Represent this sentence for searching relevant passages: {query}"
-        return generate_bge_small_embedding(query_text, dim=self.dim)
+        """Unit-normalized query embedding (cached per query text)."""
+        return _encode_query(query, self.config.model_name)
 
     def search(self, query: str, top_k: int = 10) -> List[Tuple[str, float]]:
         """Search dense index using cosine similarity."""
@@ -134,6 +170,9 @@ class DenseIndex:
         with open(json_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
+        if data.get("model_name") != config.model_name:
+            logger.warning("Dense index %s was built with %s, not %s: rebuild it with `slrag index`.",
+                           json_path, data.get("model_name"), config.model_name)
         idx = cls(config=config)
         idx.doc_ids = data.get("doc_ids", [])
         idx.dim = data.get("dim", config.embedding_dim)
